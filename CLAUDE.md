@@ -34,12 +34,19 @@
 
 ### Milestone 1：Ground Truth 构建
 - [x] build_ground_truth.py 跑通，生成：
+  　　→ 数据整合脚本。读取 4 个标注者的原始文件（CSV/Excel），统一格式、提取关键列、输出标准化文件。后续每次有新标注数据加入时重跑此脚本即可更新所有输出。
   - data/patient_index.csv（301 行，220 unique patients）
+    　　→ 病人总目录。记录每条记录来自哪个文件、是否有临床文本、是否有 ICD 码、train/test 划分。后续划分训练集/测试集时在这里改 split 列（目前全为 "unassigned"）。
   - data/patient_notes/patient_notes.csv（300 行）
+    　　→ 纯净临床文本表。只保留 patient_id + note_text，是 Module 1（extract_relevant_text）和 LLM 推理（Module 4）的直接输入。
   - outputs/ground_truth.csv（301 行）
+    　　→ 人工标注结果表。核心字段 y_true（1/0/-1）是所有模型评估的"正确答案"。Module 3 的 evaluate() 函数用这里的 y_true 计算 AUC/PPV/Recall/F1。dx_only_label 列留给 ICD-only baseline（目前为空，待补填）。
   - outputs/review_log.csv（301 行）
+    　　→ 标注过程记录表。记录谁标了哪条、标了多少分钟、标的结论是什么。用于 Technical Report 里汇报人工标注工时，也是 check_kappa() 的数据来源。
 - [x] 数据质量报告：y_true 分布 1:83 / 0:92 / -1:50 / NaN:76（jim 未填）
+  　　→ 76 条 NaN 全是 jim 文件，jim 补完后重跑 build_ground_truth.py 即可更新。-1（uncertain）暂保留，模型训练时可选择排除或单独处理。
 - [x] Kappa 候选：heg 和 jim 有 75 个重叠 subject_id
+  　　→ 这 75 人被两名标注者都标注过，可直接用 check_kappa(heg_file, jim_file) 计算 Cohen's Kappa。等 jim 补完标注后运行，目标 κ ≥ 0.8；不达标则开会对齐标注规则后重标。
 
 ### 仓库
 - [x] GitHub 仓库：https://github.com/Leoding192/hinf5026-final-project（private，main）
