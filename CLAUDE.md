@@ -85,11 +85,52 @@
 - [ ] Presentation slides（15-20 分钟，Apr 9 演示）
 - [ ] 所有代码/数据/输出打包 zip 提交
 
-### Project-level Skill 封装（Milestone 3 完成后）
-- [ ] 设计 `.claude/skills/ehr-adrd-pipeline/skill.md`
-  - 定位：project 内独立可复用，与 claude-os 无关
-  - 触发词待定（pipeline 接口确定后再写）
-  - 输入：EHR 文本路径 / patient_notes.csv
-  - 输出：predictions CSV + 评估报告
-  - 模式参数：llm-only / agent / baseline / compare-all
-  - 前置条件：Ollama 已启动，qwen2.5:7b 已 pull
+### Project-level Skill 封装（Milestone 4 完成后）
+
+> 将 pipeline 打包成可复用 skill，路径：`~/.claude/skills/ehr-adrd-pipeline/skill.md`
+
+**步骤：**
+- [ ] Step 1：确认接口 — 记录各模块实际入参/出参（以跑通为准，不提前设计）
+- [ ] Step 2：写 skill.md（用下方草稿）
+- [ ] Step 3：新对话测试触发词能否激活
+- [ ] Step 4：写入 MEMORY.md 记录 skill 路径和用途
+
+**skill.md 草稿（Milestone 4 后填入真实接口）：**
+
+```markdown
+---
+name: ehr-adrd-pipeline
+description: >
+  ADRD detection pipeline: baseline/llm-only/agent/compare-all 四种模式。
+  触发词: adrd pipeline / adrd detect / compare adrd models
+triggers:
+  - adrd pipeline
+  - run adrd pipeline
+  - adrd detect
+  - ehr adrd
+  - compare adrd models
+  - compare baseline llm agent
+---
+
+## 前置检查（llm-only / agent / compare-all 模式必须通过）
+ollama list | grep qwen2.5:7b
+未找到则提示: ollama pull qwen2.5:7b
+
+## 模式路由
+| 模式         | 调用                    | 需要 Ollama |
+|------------|------------------------|-----------|
+| baseline   | dx_only_label 直接评估    | 否 |
+| llm-only   | Module 4 ollama_client  | 是 |
+| agent      | Module 5-6 LangGraph   | 是 |
+| compare-all| 三种依次 + Module 8 可视化 | 是 |
+
+## Schema 规范化（执行前必须处理）
+- patient_notes.csv: note_text → ehr_text（函数入参名）
+- ground_truth.csv: y_true → true_label（evaluate() 入参名）
+- 过滤 true_label = -1（uncertain）和 NaN
+
+## 输出
+- outputs/llm_predictions.csv
+- outputs/agent_predictions.csv
+- outputs/model_comparison.png（compare-all 模式）
+```
