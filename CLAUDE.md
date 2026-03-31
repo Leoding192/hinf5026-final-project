@@ -84,3 +84,12 @@
 - [ ] Technical report（3–8 页 PDF）
 - [ ] Presentation slides（15-20 分钟，Apr 9 演示）
 - [ ] 所有代码/数据/输出打包 zip 提交
+
+### Project-level Skill 封装（Milestone 3 完成后）
+- [ ] 设计 `.claude/skills/ehr-adrd-pipeline/skill.md`
+  - 定位：project 内独立可复用，与 claude-os 无关
+  - 触发词待定（pipeline 接口确定后再写）
+  - 输入：EHR 文本路径 / patient_notes.csv
+  - 输出：predictions CSV + 评估报告
+  - 模式参数：llm-only / agent / baseline / compare-all
+  - 前置条件：Ollama 已启动，qwen2.5:7b 已 pull
