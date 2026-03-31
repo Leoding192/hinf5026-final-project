@@ -5,6 +5,7 @@
 - 技术栈：Python / Ollama Qwen2.5:7b / LangGraph
 - 代码文件：hinf5026_final_project.py（8 个模块）
 - GitHub：https://github.com/Leoding192/hinf5026-final-project（private）
+- Skills 路径：~/.claude/skills/
 
 ## 作业规则
 - 含 "作业" 关键词时：只做要求的，不加额外优化
@@ -57,8 +58,7 @@
 ## 待办事项
 
 ### 紧急（本周内）
-- [ ] jim 补全标注：reviewer_jim 的 75 条 y_true 全为空，联系 jim 填写后重跑 build_ground_truth.py
-- [ ] 邀请 collaborators：需要 maojiaqi1128 / heg4007 的 GitHub 用户名，在仓库 Settings → Collaborators 添加
+- [ ] jim 补全标注：reviewer_jim 的 75 条 y_true 全为空，填写后重跑 build_ground_truth.py
 - [ ] adrd_dx(final) 补填：4 个文件该列全为空，需从 ICD 码推导，作为 dx_only baseline
 
 ### Milestone 1 收尾（3/29–3/30）
