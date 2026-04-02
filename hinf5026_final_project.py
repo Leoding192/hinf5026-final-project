@@ -129,29 +129,59 @@ LABEL_SCHEMA = {
     "required": ["label", "confidence", "evidence", "probability"],
 }
 
+SYSTEM_PROMPT = (
+    "You are a clinical NLP expert specializing in identifying Alzheimer's Disease "
+    "and Related Dementias (AD/ADRD) from electronic health records. "
+    "Always respond with valid JSON only."
+)
 
-def call_llm(prompt: str, model: str = "qwen2.5:0.5b") -> dict:
+
+def call_llm(
+    prompt: str, model: str = "qwen2.5:1.5b", provider: str = "ollama"
+) -> dict:
     """
-    Call local Ollama model with forced JSON output.
+    Call LLM with forced JSON output.
+    provider: "ollama" (local) or "qwen" (Qwen API via DashScope).
     Falls back to error dict if JSON parsing fails.
     """
-    response = ollama.chat(
-        model=model,
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a clinical NLP expert specializing in "
-                "identifying Alzheimer's Disease and Related "
-                "Dementias (AD/ADRD) from electronic health records.",
-            },
-            {"role": "user", "content": prompt},
-        ],
-        format="json",  # enforce structured output
-    )
     try:
-        return json.loads(response["message"]["content"])
+        if provider == "qwen":
+            import openai
+
+            client = openai.OpenAI(
+                api_key=os.environ.get("DASHSCOPE_API_KEY"),
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            )
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+                response_format={"type": "json_object"},
+            )
+            raw = response.choices[0].message.content
+        else:
+            response = ollama.chat(
+                model=model,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+                format="json",
+            )
+            raw = response["message"]["content"]
+        return json.loads(raw)
     except json.JSONDecodeError as e:
         print(f"  [WARN] JSON parse failed: {e}")
+        return {
+            "label": -1,
+            "confidence": "error",
+            "evidence": str(e),
+            "probability": -1,
+        }
+    except Exception as e:
+        print(f"  [ERROR] LLM call failed: {e}")
         return {
             "label": -1,
             "confidence": "error",
@@ -210,10 +240,15 @@ import time
 
 
 def run_batch_inference(
-    data_csv: str, output_csv: str, model: str = "qwen2.5:0.5b", template: str = COT
+    data_csv: str,
+    output_csv: str,
+    model: str = "qwen2.5:1.5b",
+    template: str = COT,
+    provider: str = "ollama",
 ):
     """
     Run LLM inference on all patients in data_csv.
+    provider: "ollama" (local Ollama) or "qwen" (Qwen API).
     Saves predictions to output_csv.
     """
     df = pd.read_csv(data_csv)
@@ -232,7 +267,6 @@ def run_batch_inference(
         if candidate in df.columns:
             text_col = candidate
             break
-
     if text_col is None:
         raise ValueError(
             f"Could not find EHR text column in {data_csv}. "
@@ -245,25 +279,25 @@ def run_batch_inference(
         if candidate in df.columns:
             id_col = candidate
             break
-
     if id_col is None:
         raise ValueError(
             f"Could not find patient id column in {data_csv}. "
             f"Available columns: {list(df.columns)}"
         )
 
-    # 0.5b 模型需要更长的 sleep
-    sleep_time = 1.0 if "0.5b" in model else 0.3
+    # Qwen API 无需 sleep；Ollama 小模型需要限速
+    sleep_time = 0.0 if provider == "qwen" else (1.0 if "0.5b" in model else 0.3)
 
     for i, row in df.iterrows():
         patient_id = row[id_col]
-        print(f"[{i+1}/{len(df)}] patient {patient_id}")
+        print(f"[{i+1}/{len(df)}] patient {patient_id} ({provider})")
         ehr = extract_relevant_text(str(row[text_col]))
         prompt = template.format(ehr_text=ehr)
-        result = call_llm(prompt, model)
+        result = call_llm(prompt, model, provider)
         result["patient_id"] = patient_id
         results.append(result)
-        time.sleep(sleep_time)  # avoid overloading local model
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
     out_df = pd.DataFrame(results)
     out_df.to_csv(output_csv, index=False)
@@ -296,16 +330,34 @@ class ADRDState(TypedDict):
     evidence_chain: List[str]
 
 
-_MODEL = "qwen2.5:0.5b"
+_MODEL = "qwen2.5:1.5b"
+_PROVIDER = "ollama"
 
 
 def _ask(prompt: str) -> dict:
-    r = ollama.chat(
-        model=_MODEL, messages=[{"role": "user", "content": prompt}], format="json"
-    )
     try:
-        return json.loads(r["message"]["content"])
-    except json.JSONDecodeError:
+        if _PROVIDER == "qwen":
+            import openai
+
+            client = openai.OpenAI(
+                api_key=os.environ.get("DASHSCOPE_API_KEY"),
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            )
+            r = client.chat.completions.create(
+                model=_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+            )
+            raw = r.choices[0].message.content
+        else:
+            r = ollama.chat(
+                model=_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                format="json",
+            )
+            raw = r["message"]["content"]
+        return json.loads(raw)
+    except Exception:
         return {"score": 0.0, "evidence": "parse error"}
 
 
@@ -410,10 +462,18 @@ def run_agent(patient_id: str, ehr_text: str) -> dict:
     }
 
 
-def run_agent_batch(data_csv: str, output_csv: str, model: str = "qwen2.5:0.5b"):
-    """Run agent pipeline on all patients in data_csv."""
-    global _MODEL
-    _MODEL = model  # update global model
+def run_agent_batch(
+    data_csv: str,
+    output_csv: str,
+    model: str = "qwen2.5:1.5b",
+    provider: str = "ollama",
+):
+    """Run agent pipeline on all patients in data_csv.
+    provider: "ollama" (local) or "qwen" (Qwen API).
+    """
+    global _MODEL, _PROVIDER
+    _MODEL = model
+    _PROVIDER = provider
 
     df = pd.read_csv(data_csv)
     results = []
@@ -431,7 +491,6 @@ def run_agent_batch(data_csv: str, output_csv: str, model: str = "qwen2.5:0.5b")
         if candidate in df.columns:
             text_col = candidate
             break
-
     if text_col is None:
         raise ValueError(
             f"Could not find EHR text column in {data_csv}. "
@@ -444,19 +503,21 @@ def run_agent_batch(data_csv: str, output_csv: str, model: str = "qwen2.5:0.5b")
         if candidate in df.columns:
             id_col = candidate
             break
-
     if id_col is None:
         raise ValueError(
             f"Could not find patient id column in {data_csv}. "
             f"Available columns: {list(df.columns)}"
         )
 
+    sleep_time = 0.0 if provider == "qwen" else (1.0 if "0.5b" in model else 0.3)
+
     for i, row in df.iterrows():
         patient_id = row[id_col]
-        print(f"[{i+1}/{len(df)}] agent: patient {patient_id}")
+        print(f"[{i+1}/{len(df)}] agent: patient {patient_id} ({provider})")
         r = run_agent(patient_id, str(row[text_col]))
         results.append(r)
-        time.sleep(1.0)  # 0.5b 需要更长的 sleep
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
     out = pd.DataFrame(results)
     out.to_csv(output_csv, index=False)
@@ -518,62 +579,38 @@ def compare_all_models(
 if __name__ == "__main__":
     import os
 
-    BASE_DIR = "/Users/apple/Downloads/hinf5026-final-project-main/outputs"
-    ANNO_DIR = os.path.join(BASE_DIR, "annotations")
-    RESULT_DIR = os.path.join(BASE_DIR, "results")
-    FIG_DIR = os.path.join(BASE_DIR, "figures")
-    INPUT_CSV = "data/patient_notes/patient_notes.csv"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
+    RESULT_DIR = os.path.join(OUTPUT_DIR, "results")
+    INPUT_CSV = os.path.join(BASE_DIR, "data", "patient_notes", "patient_notes.csv")
 
-    os.makedirs(ANNO_DIR, exist_ok=True)
     os.makedirs(RESULT_DIR, exist_ok=True)
-    os.makedirs(FIG_DIR, exist_ok=True)
 
-    # --- Step 1: create annotation template ---
-    create_annotation_template(
-        patient_ids=list(range(1, 201)),
-        output_path=os.path.join(ANNO_DIR, "template.csv"),
-    )
-
-    # --- Step 2: check inter-annotator agreement ---
-    if os.path.exists(os.path.join(ANNO_DIR, "annotator_a.csv")) and os.path.exists(
-        os.path.join(ANNO_DIR, "annotator_b.csv")
-    ):
-        check_kappa(
-            os.path.join(ANNO_DIR, "annotator_a.csv"),
-            os.path.join(ANNO_DIR, "annotator_b.csv"),
-        )
-    else:
-        print("⚠️ 跳过 Step 2（没有 annotator_a.csv 或 annotator_b.csv）")
-
-    # --- Step 3: run LLM inference (Zero-shot) ---
+    # --- Step 1: run LLM inference (CoT, local qwen2.5:1.5b on M4) ---
     run_batch_inference(
         data_csv=INPUT_CSV,
-        output_csv=os.path.join(RESULT_DIR, "llm_zeroshot.csv"),
-        model="qwen2.5:0.5b",
-        template=ZERO_SHOT,
-    )
-
-    # --- Step 3.1: run LLM inference (Few-shot) ---
-    run_batch_inference(
-        data_csv=INPUT_CSV,
-        output_csv=os.path.join(RESULT_DIR, "llm_fewshot.csv"),
-        model="qwen2.5:0.5b",
-        template=FEW_SHOT,
-    )
-
-    # --- Step 3.2: run LLM inference (CoT) ---
-    run_batch_inference(
-        data_csv=INPUT_CSV,
-        output_csv=os.path.join(RESULT_DIR, "llm_cot.csv"),
-        model="qwen2.5:0.5b",
+        output_csv=os.path.join(RESULT_DIR, "llm_qwen_cot.csv"),
+        model="qwen2.5:1.5b",
         template=COT,
+        provider="ollama",
     )
 
-    # --- Step 4: run agent pipeline ---
+    # --- Step 2: run LLM inference (CoT, Qwen API for comparison) ---
+    # Requires: pip install openai && export DASHSCOPE_API_KEY=...
+    run_batch_inference(
+        data_csv=INPUT_CSV,
+        output_csv=os.path.join(RESULT_DIR, "llm_qwen_api_cot.csv"),
+        model="qwen-plus",
+        template=COT,
+        provider="qwen",
+    )
+
+    # --- Step 3: run agent pipeline (local qwen2.5:1.5b) ---
     run_agent_batch(
         data_csv=INPUT_CSV,
-        output_csv=os.path.join(RESULT_DIR, "agent.csv"),
-        model="qwen2.5:0.5b",
+        output_csv=os.path.join(RESULT_DIR, "agent_qwen.csv"),
+        model="qwen2.5:1.5b",
+        provider="ollama",
     )
 
     # --- Step 5: compare all models ---

@@ -30,6 +30,21 @@
   - Module 4–7: Ollama 推理、LangGraph Agent、批量运行（骨架已写）
   - Module 8: 模型对比可视化（compare_all_models）
 
+### 双 Provider 推理架构重构（2026-04-02）
+- [x] `call_llm()` 加 `provider` 参数（`"ollama"` / `"openai"`）
+  - 同一套 prompt 逻辑不变，只换底层 API；未来加新 provider 只需加 `elif`
+- [x] `_ask()` + 全局 `_PROVIDER` 支持切换
+  - LangGraph Agent 的三个子节点（icd/med/note）通过全局变量控制 provider，`run_agent_batch()` 传入即生效
+- [x] 默认模型从 `qwen2.5:0.5b` 改为 `qwen2.5:1.5b`
+  - M4 上 1.5b 完全可以跑，精度更接近 7b，0.5b 太弱
+- [x] `sleep_time` 逻辑更新
+  - Qwen API：无需 sleep（有自带 rate limit）；Ollama 1.5b：0.3s（比 0.5b 的 1.0s 快）
+- [x] `__main__` 路径改为相对路径（`os.path.abspath(__file__)`）
+  - 原来写死 `/Users/apple/Downloads/...`，只能在一台电脑上跑；现在任何人 clone 后直接运行
+- [x] `__main__` 新增 Qwen API 推理步骤（原 GPT-4o-mini，改为 Qwen API 有免费 token）
+  - 直接体现三路对比：dx_only baseline → qwen:1.5b（本地边缘）→ qwen-plus（云端 API）
+  - Module 8 `compare_all_models()` 输出完整对比图，支撑 Technical Report 的 AI infra 叙事
+
 ### qwen2.5:0.5b 优化（2026-04-02）
 - [x] **rate limiting**：增加动态 sleep
   - `run_batch_inference()`：0.5b 模型用 1.0s sleep（之前 0.3s）
@@ -70,6 +85,75 @@
 - [x] 跑 check_kappa：heg vs jim 75 个重叠病人，目标 κ ≥ 0.8
 - [x] 确认有效标注数量（去掉 jim NaN 后约 150 条，需补至 200）
 - [x] 划分 train(120)/test(80)，更新 patient_index.csv 的 split 列
+
+## 项目过程中遇到的问题（持续记录）
+
+### 数据层面（2026-04-02 发现）
+
+**问题 1：note_id 大量重复（81 个重复，共 156 行）**
+- ground_truth.csv 中同一个 note_id 出现多次，因为多名 reviewer 标注了同一条记录
+- 影响：LLM 推理前若不去重，同一条 note 会被推理多次，浪费算力 + 污染评估指标
+- **解决：跑 Module 4 之前必须先 `df.drop_duplicates(subset=['note_id'])` 去重**
+
+**问题 2：reviewer_jim decision 在 review_log 里全为 NaN（75 条）**
+- jim 的 y_true 已经更新进 ground_truth，但 review_log.decision 列全空
+- 影响：check_kappa() 若从 review_log 读 decision，jim 那 75 条会全被跳过，kappa 计算出错
+- **解决：check_kappa() 直接比对两个人在 ground_truth 里的 y_true 子集，不从 review_log 读**
+
+**问题 3：幽灵行（ground_truth 第 75 行）**
+- patient_id / note_id 全是 NaN，只有 source_file 和 split='uncertain'，是 CSV 生成时产生的空行
+- **解决：评估前统一 `df.dropna(subset=['patient_id'])` 过滤**
+
+**问题 4：dx_only baseline 假阳性率极高（特异度仅 42.7%）**
+- ICD 码 baseline：灵敏度 100%（0 漏诊），但 117 个真阴性里有 67 个被错标为阳性
+- 这是预期内结果（ICD 码过诊断），不需要修复，但 Technical Report 里需要明确说明
+
+### 数据清洗操作引发的问题（2026-04-02 发现）
+
+**问题 5：文件命名错误导致 pipeline 断掉（已修）**
+- Codex 清洗数据后写入 `ground_truth(1).csv`，同时删除了原 `ground_truth.csv`
+- `hinf5026_final_project.py:580` 和 `build_ground_truth.py:162` 都在找 `ground_truth.csv`，找不到直接报错
+- `(1)` 后缀是 macOS 重复下载 artifact，不应作为正式文件名
+- **已解决**：`mv "outputs/ground_truth(1).csv" "outputs/ground_truth.csv"`
+
+**问题 6：去重保留 heg 标注，丢弃 jim 标注（已修）**
+- 75 个重叠 note_id 去重后全保留了 heg 的行，jim 的标签只能从 review_log 里间接找回
+- **已解决**：决定不做 Kappa，直接从 review_log 删除 reviewer_jim 全部 75 行（300 → 225 行）
+
+**问题 7：review_log 幽灵行未删（已修）**
+- ghost row 已从 ground_truth 删除，但 review_log 里仍有 1 行 NaN（decision NaN count = 1）
+- **已解决**：`dropna(subset=['patient_id'])` 删除，review_log 301 → 300 行
+
+### 推理环境（2026-04-02 发现）
+
+**问题 5：M1 本地跑不动 Ollama（已决策）**
+- 原计划 qwen2.5:7b，M1 资源不足跑不动；降级到 0.5b 加 rate limiting 仍不稳定
+- **决策：Option 1 + Option 3 组合方案**
+
+#### 推理环境最终方案
+
+**背景**：项目契合 AI infra 叙事——用最小的模型、最普通的硬件处理数据，研究性能与成本的 trade-off。
+
+**方案**：
+| 阶段 | 机器 | 模型 | 数据范围 |
+|------|------|------|---------|
+| Module 4–6（本地推理） | M4（组员机器） | qwen2.5:1.5b via Ollama | 全量 219 条 |
+| Module 4 对比（API 推理） | 任意机器 | qwen-plus（Qwen API） | 全量 219 条（有免费 token）|
+
+**Module 8 compare_all_models 输出 3 条曲线**：
+1. `dx_only` — ICD 规则，无 LLM
+2. `qwen2.5:1.5b` — 边缘推理，本地小模型
+3. `qwen-plus` — 云端 API，更强模型
+
+**Technical Report 叙事**：相同数据集，从 ICD 规则 → 小模型边缘推理 → 大模型 API，量化性能（AUC/F1）与成本的 trade-off。这正是 AI infra 的核心问题。
+
+**实现要点**：
+- Module 4 新增 `provider` 参数：`"ollama"` 或 `"qwen"`
+- Qwen API 用 `openai` Python 库 + DashScope 兼容端点，prompt 格式与 Ollama 版保持一致
+- 环境变量：`DASHSCOPE_API_KEY`
+- 输出分别写入 `outputs/llm_qwen_cot.csv`（本地）和 `outputs/llm_qwen_api_cot.csv`（API）
+
+---
 
 ## 待办事项
 
