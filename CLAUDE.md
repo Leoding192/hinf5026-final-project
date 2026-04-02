@@ -30,6 +30,15 @@
   - Module 4–7: Ollama 推理、LangGraph Agent、批量运行（骨架已写）
   - Module 8: 模型对比可视化（compare_all_models）
 
+### qwen2.5:0.5b 优化（2026-04-02）
+- [x] **rate limiting**：增加动态 sleep
+  - `run_batch_inference()`：0.5b 模型用 1.0s sleep（之前 0.3s）
+  - `run_agent_batch()`：并行 3 agents 每条 1.0s（防止 Ollama 内存溢出）
+- [x] **model 参数支持**：run_agent_batch() 现在接受 model 参数，可动态切换
+- [x] **自动列名识别**：run_batch_inference/run_agent_batch 自动识别 patient_id / text 列
+- [x] **代码清理**：删除 __main__ 里重复定义的 run_agent_batch()
+- 原因：0.5b 模型资源有限，60+ 条数据时无速率限制会导致并发请求溢出、卡死
+
 ### 标注规则
 - [x] annotation_guide.md 完成（标注格式、evidence_type 分类、Label 规则、ICD-10 速查表）
 
@@ -53,21 +62,19 @@
 - [x] GitHub 仓库：https://github.com/Leoding192/hinf5026-final-project（private，main）
 - [x] 12 个文件全部 push
 
----
+### 紧急（本周内）
+- [x] jim 补全标注：reviewer_jim 的 75 条 y_true 全为空，填写后重跑 build_ground_truth.py
+- [x] adrd_dx(final) 补填：4 个文件该列全为空，需从 ICD 码推导，作为 dx_only baseline
+
+### Milestone 1 收尾（3/29–3/30）
+- [x] 跑 check_kappa：heg vs jim 75 个重叠病人，目标 κ ≥ 0.8
+- [x] 确认有效标注数量（去掉 jim NaN 后约 150 条，需补至 200）
+- [x] 划分 train(120)/test(80)，更新 patient_index.csv 的 split 列
 
 ## 待办事项
 
-### 紧急（本周内）
-- [ ] jim 补全标注：reviewer_jim 的 75 条 y_true 全为空，填写后重跑 build_ground_truth.py
-- [ ] adrd_dx(final) 补填：4 个文件该列全为空，需从 ICD 码推导，作为 dx_only baseline
-
-### Milestone 1 收尾（3/29–3/30）
-- [ ] 跑 check_kappa：heg vs jim 75 个重叠病人，目标 κ ≥ 0.8
-- [ ] 确认有效标注数量（去掉 jim NaN 后约 150 条，需补至 200）
-- [ ] 划分 train(120)/test(80)，更新 patient_index.csv 的 split 列
-
 ### Milestone 2：LLM 推理（4/2–4/4）
-- [ ] 安装启动 Ollama：`brew install ollama && ollama pull qwen2.5:7b`
+- [ ] 安装启动 Ollama：`brew install ollama && ollama pull 1`
 - [ ] 实现 ollama_client.py（Module 4）：prompt 设计 + JSON 输出
 - [ ] 跑推理，生成 outputs/llm_predictions.csv
 - [ ] 评估 LLM 性能，对比 dx_only baseline
