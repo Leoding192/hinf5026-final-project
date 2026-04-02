@@ -1,13 +1,13 @@
 """
 HINF 5026 Final Project — AD/ADRD Identification from EHR
 Revised by Codex Review | 2026-03-27
-Stack: Python + Ollama (Qwen2.5:7b) + LangGraph
+Stack: Python + Ollama (qwen2.5:0.5b) + LangGraph
 """
 
 # ============================================================
 # 0. SETUP
 # pip install ollama langgraph pandas scikit-learn matplotlib seaborn jupyter python-dotenv
-# brew install ollama && ollama pull qwen2.5:7b
+# brew install ollama && ollama pull qwen2.5:0.5b
 # ============================================================
 
 # ============================================================
@@ -23,7 +23,7 @@ RELEVANT_SECTIONS = [
     "discharge summary",
     "problem list",
 ]
-MAX_CHARS = 6000  # safe range for qwen2.5:7b (32K context)
+MAX_CHARS = 6000  # safe range for qwen2.5:0.5b (32K context)
 
 
 def extract_relevant_text(full_ehr: str) -> str:
@@ -130,7 +130,7 @@ LABEL_SCHEMA = {
 }
 
 
-def call_llm(prompt: str, model: str = "qwen2.5:7b") -> dict:
+def call_llm(prompt: str, model: str = "qwen2.5:0.5b") -> dict:
     """
     Call local Ollama model with forced JSON output.
     Falls back to error dict if JSON parsing fails.
@@ -210,7 +210,7 @@ import time
 
 
 def run_batch_inference(
-    data_csv: str, output_csv: str, model: str = "qwen2.5:7b", template: str = COT
+    data_csv: str, output_csv: str, model: str = "qwen2.5:0.5b", template: str = COT
 ):
     """
     Run LLM inference on all patients in data_csv.
@@ -219,14 +219,51 @@ def run_batch_inference(
     df = pd.read_csv(data_csv)
     results = []
 
+    # 自动识别病历文本列名
+    text_col = None
+    for candidate in [
+        "ehr_text",
+        "note_text",
+        "patient_note",
+        "note",
+        "text",
+        "content",
+    ]:
+        if candidate in df.columns:
+            text_col = candidate
+            break
+
+    if text_col is None:
+        raise ValueError(
+            f"Could not find EHR text column in {data_csv}. "
+            f"Available columns: {list(df.columns)}"
+        )
+
+    # 自动识别患者ID列名
+    id_col = None
+    for candidate in ["patient_id", "subject_id", "id"]:
+        if candidate in df.columns:
+            id_col = candidate
+            break
+
+    if id_col is None:
+        raise ValueError(
+            f"Could not find patient id column in {data_csv}. "
+            f"Available columns: {list(df.columns)}"
+        )
+
+    # 0.5b 模型需要更长的 sleep
+    sleep_time = 1.0 if "0.5b" in model else 0.3
+
     for i, row in df.iterrows():
-        print(f"[{i+1}/{len(df)}] patient {row['patient_id']}")
-        ehr = extract_relevant_text(str(row["ehr_text"]))
+        patient_id = row[id_col]
+        print(f"[{i+1}/{len(df)}] patient {patient_id}")
+        ehr = extract_relevant_text(str(row[text_col]))
         prompt = template.format(ehr_text=ehr)
         result = call_llm(prompt, model)
-        result["patient_id"] = row["patient_id"]
+        result["patient_id"] = patient_id
         results.append(result)
-        time.sleep(0.3)  # avoid overloading local model
+        time.sleep(sleep_time)  # avoid overloading local model
 
     out_df = pd.DataFrame(results)
     out_df.to_csv(output_csv, index=False)
@@ -259,7 +296,7 @@ class ADRDState(TypedDict):
     evidence_chain: List[str]
 
 
-_MODEL = "qwen2.5:7b"
+_MODEL = "qwen2.5:0.5b"
 
 
 def _ask(prompt: str) -> dict:
@@ -373,14 +410,54 @@ def run_agent(patient_id: str, ehr_text: str) -> dict:
     }
 
 
-def run_agent_batch(data_csv: str, output_csv: str):
+def run_agent_batch(data_csv: str, output_csv: str, model: str = "qwen2.5:0.5b"):
     """Run agent pipeline on all patients in data_csv."""
+    global _MODEL
+    _MODEL = model  # update global model
+
     df = pd.read_csv(data_csv)
     results = []
+
+    # 自动识别病历文本列名
+    text_col = None
+    for candidate in [
+        "ehr_text",
+        "note_text",
+        "patient_note",
+        "note",
+        "text",
+        "content",
+    ]:
+        if candidate in df.columns:
+            text_col = candidate
+            break
+
+    if text_col is None:
+        raise ValueError(
+            f"Could not find EHR text column in {data_csv}. "
+            f"Available columns: {list(df.columns)}"
+        )
+
+    # 自动识别患者ID列名
+    id_col = None
+    for candidate in ["patient_id", "subject_id", "id"]:
+        if candidate in df.columns:
+            id_col = candidate
+            break
+
+    if id_col is None:
+        raise ValueError(
+            f"Could not find patient id column in {data_csv}. "
+            f"Available columns: {list(df.columns)}"
+        )
+
     for i, row in df.iterrows():
-        print(f"[{i+1}/{len(df)}] agent: patient {row['patient_id']}")
-        r = run_agent(row["patient_id"], str(row["ehr_text"]))
+        patient_id = row[id_col]
+        print(f"[{i+1}/{len(df)}] agent: patient {patient_id}")
+        r = run_agent(patient_id, str(row[text_col]))
         results.append(r)
+        time.sleep(1.0)  # 0.5b 需要更长的 sleep
+
     out = pd.DataFrame(results)
     out.to_csv(output_csv, index=False)
     print(f"\nAgent results saved: {output_csv}")
@@ -438,44 +515,81 @@ def compare_all_models(
 # ============================================================
 # EXAMPLE USAGE
 # ============================================================
-
 if __name__ == "__main__":
+    import os
+
+    BASE_DIR = "/Users/apple/Downloads/hinf5026-final-project-main/outputs"
+    ANNO_DIR = os.path.join(BASE_DIR, "annotations")
+    RESULT_DIR = os.path.join(BASE_DIR, "results")
+    FIG_DIR = os.path.join(BASE_DIR, "figures")
+    INPUT_CSV = "data/patient_notes/patient_notes.csv"
+
+    os.makedirs(ANNO_DIR, exist_ok=True)
+    os.makedirs(RESULT_DIR, exist_ok=True)
+    os.makedirs(FIG_DIR, exist_ok=True)
+
     # --- Step 1: create annotation template ---
-    # create_annotation_template(
-    #     patient_ids=list(range(1, 201)),
-    #     output_path="data/annotations/template.csv"
-    # )
+    create_annotation_template(
+        patient_ids=list(range(1, 201)),
+        output_path=os.path.join(ANNO_DIR, "template.csv"),
+    )
 
     # --- Step 2: check inter-annotator agreement ---
-    # check_kappa("data/annotations/annotator_a.csv",
-    #             "data/annotations/annotator_b.csv")
+    if os.path.exists(os.path.join(ANNO_DIR, "annotator_a.csv")) and os.path.exists(
+        os.path.join(ANNO_DIR, "annotator_b.csv")
+    ):
+        check_kappa(
+            os.path.join(ANNO_DIR, "annotator_a.csv"),
+            os.path.join(ANNO_DIR, "annotator_b.csv"),
+        )
+    else:
+        print("⚠️ 跳过 Step 2（没有 annotator_a.csv 或 annotator_b.csv）")
 
-    # --- Step 3: run LLM inference (CoT) ---
-    # run_batch_inference(
-    #     data_csv="data/raw/patients.csv",
-    #     output_csv="data/results/llm_cot.csv",
-    #     model="qwen2.5:7b",
-    #     template=COT
-    # )
+    # --- Step 3: run LLM inference (Zero-shot) ---
+    run_batch_inference(
+        data_csv=INPUT_CSV,
+        output_csv=os.path.join(RESULT_DIR, "llm_zeroshot.csv"),
+        model="qwen2.5:0.5b",
+        template=ZERO_SHOT,
+    )
+
+    # --- Step 3.1: run LLM inference (Few-shot) ---
+    run_batch_inference(
+        data_csv=INPUT_CSV,
+        output_csv=os.path.join(RESULT_DIR, "llm_fewshot.csv"),
+        model="qwen2.5:0.5b",
+        template=FEW_SHOT,
+    )
+
+    # --- Step 3.2: run LLM inference (CoT) ---
+    run_batch_inference(
+        data_csv=INPUT_CSV,
+        output_csv=os.path.join(RESULT_DIR, "llm_cot.csv"),
+        model="qwen2.5:0.5b",
+        template=COT,
+    )
 
     # --- Step 4: run agent pipeline ---
-    # run_agent_batch(
-    #     data_csv="data/raw/patients.csv",
-    #     output_csv="data/results/agent.csv"
-    # )
+    run_agent_batch(
+        data_csv=INPUT_CSV,
+        output_csv=os.path.join(RESULT_DIR, "agent.csv"),
+        model="qwen2.5:0.5b",
+    )
 
     # --- Step 5: compare all models ---
-    # compare_all_models(
-    #     ground_truth_csv="data/annotations/final_labels.csv",
-    #     results_map={
-    #         "Baseline (HW1)":   "data/results/baseline.csv",
-    #         "LLM Zero-shot":    "data/results/llm_zeroshot.csv",
-    #         "LLM Few-shot":     "data/results/llm_fewshot.csv",
-    #         "LLM CoT":          "data/results/llm_cot.csv",
-    #         "Multi-Agent":      "data/results/agent.csv",
-    #     },
-    #     output_fig="figures/model_comparison.png"
-    # )
+    if os.path.exists(os.path.join(BASE_DIR, "ground_truth.csv")):
+        compare_all_models(
+            ground_truth_csv=os.path.join(BASE_DIR, "ground_truth.csv"),
+            results_map={
+                "Baseline (DX Only)": os.path.join(BASE_DIR, "dx_only_baseline.csv"),
+                "LLM Zero-shot": os.path.join(RESULT_DIR, "llm_zeroshot.csv"),
+                "LLM Few-shot": os.path.join(RESULT_DIR, "llm_fewshot.csv"),
+                "LLM CoT": os.path.join(RESULT_DIR, "llm_cot.csv"),
+                "Multi-Agent": os.path.join(RESULT_DIR, "agent.csv"),
+            },
+            output_fig=os.path.join(BASE_DIR, "model_comparison_plot.png"),
+        )
+    else:
+        print("⚠️ 没有 ground_truth.csv，跳过 Step 5")
 
-    print("hinf5026_final_project.py loaded successfully.")
-    print("Uncomment the steps in __main__ to run each milestone.")
+    print("✅ 全流程运行完成！")
