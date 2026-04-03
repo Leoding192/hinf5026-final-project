@@ -131,6 +131,35 @@
 
 ---
 
+## 评估与数据清洗（2026-04-03）
+
+**V1：n=169 而非 219 的原因**
+- ground_truth.csv 共 219 条（去重后），但 y_true 分布：1=78 / 0=91 / -1=50
+- -1 表示标注者无法判断（uncertain），评估时必须过滤，只保留有明确标注的行
+- 78 + 91 = 169，这是所有指标的实际评估样本量
+- Report 注释：*"Evaluation was performed on n=169 patients with definitive labels (y_true ∈ {0,1}); 50 uncertain cases (y_true = -1) were excluded."*
+
+**V2：tier2 CSV 数据问题（已修复）**
+- 原始 `tier2/llm_qwen_cot.csv` 有 300 行（未去重）、label=3 异常值 1 条、probability 为 string 类型、20 列冗余字段
+- 修复：去重（300→218）、过滤 label=3、probability 转 float、confidence 统一小写、只保留 6 列
+- 修复后评估：Sensitivity=0.628 / Specificity=0.473 / F1=0.560 / AUC=0.491
+
+**V3：tier0 CSV 未去重导致 n 虚高（已修复）**
+- `tier0/dx_only_baseline.csv` 有 300 行但 patient_id 只有 219 个唯一值
+- merge 时一个 ground_truth 行匹配多个 tier0 行，导致 n=248（错误）
+- 修复：drop_duplicates(subset=['patient_id'])，300→219 行，n 恢复正常 169
+
+**V4：四层最终评估结果（n=169，2026-04-03）**
+
+| Tier | Sensitivity | Specificity | PPV | F1 | AUC |
+|------|-------------|-------------|-----|----|-----|
+| Tier0 dx_only | 1.000 | 0.264 | 0.538 | 0.700 | 0.632 |
+| Tier1 Edge Agent | 0.846 | 0.495 | 0.589 | 0.695 | 0.696 |
+| Tier2 Cloud Direct | 0.628 | 0.473 | 0.505 | 0.560 | 0.491 |
+| Tier3 Frontier | 0.769 | 0.648 | 0.652 | 0.706 | 0.755 |
+
+---
+
 ## 推理环境（2026-04-02）
 
 **E1：M1 本地跑不动 Ollama 7b（已决策）**
