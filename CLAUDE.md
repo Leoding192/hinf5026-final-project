@@ -160,15 +160,18 @@
 ## 待办事项
 
 ### Milestone 2：LLM 推理（4/2–4/4）
-- [ ] 安装启动 Ollama：`brew install ollama && ollama pull 1`
-- [ ] 实现 ollama_client.py（Module 4）：prompt 设计 + JSON 输出
-- [ ] 跑推理，生成 outputs/llm_predictions.csv
-- [ ] 评估 LLM 性能，对比 dx_only baseline
+- [x] 安装启动 Ollama：`brew install ollama && ollama pull 1`
+- [x] 实现 Module 4（call_llm / run_batch_inference）：prompt 设计 + JSON 输出
+- [x] 跑推理，生成 tier1/llm_qwen_cot.csv（Tier 1 初步结果，300行）
+- [ ] 评估 LLM 性能，对比 dx_only baseline（等 M4/M2 结果回来）
 
 ### Milestone 3：Agent 架构
-- [ ] 实现 LangGraph Agent（Module 5-6）：并行 fan-out + 加权 synthesis
-- [ ] 跑 Agent 推理，生成 outputs/
-- [ ] 评估 Agent 性能
+- [x] 实现 LangGraph Agent（Module 5-6）：ICD/Med/Note 并行 fan-out + 加权 synthesis
+- [x] 代码已发给 **M4** 跑本地 Agent 推理（Tier 1，qwen2.5:1.5b via Ollama）
+- [x] 代码已发给 **M2** 跑云端 API 推理（Tier 2，qwen-plus via DashScope）
+- [ ] 等待 M4 结果：`tier1/agent_tier1.csv`
+- [ ] 等待 M2 结果：`outputs/llm_qwen_api_cot.csv`
+- [ ] 收到结果后跑 compare_all_models()，评估 Agent 性能
 
 ### Milestone 4：对比 & 可视化
 - [ ] compare_all_models()：汇总 dx_only / LLM / Agent，输出 model_comparison.png
