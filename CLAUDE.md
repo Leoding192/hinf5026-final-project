@@ -34,6 +34,7 @@
 ## Inter-rater Reliability 说明
 - 3 个 reviewer 各标注 75 个不同患者（无系统性重叠），Cohen's Kappa 不适用
 - Report 里说明：reviewers each covered non-overlapping subsets; formal kappa not computed
+- **Human effort**：review_log.csv 的 minutes_spent 已填充（seed1≈12min, seed2≈15min, heg≈18min，total≈55.6人工时）
 
 ## 推理架构
 | Tier | 机器 | 模型 | 隐私 |
@@ -56,6 +57,8 @@
 - [x] Ground truth 219 条，train/test split 完成
 - [x] 四层推理结果全部就绪（tier0–3）
 - [x] model_comparison.png（test set, n=67）
+- [x] Human effort 估算填充（review_log.csv minutes_spent，~55.6 hrs）
+- [x] Cohen's Kappa 不可计算 → 记录为 Limitation（project_log.md Q1）
 - [ ] Technical report（3–8 页 PDF）← 下一步
 - [ ] Presentation slides（ppt.md 大纲已建）← Apr 9 演示
 - [ ] 最终 zip 打包提交 ← Apr 16

@@ -173,3 +173,157 @@
 | Tier 1 Edge Agent | M4（qwen2.5:1.5b via Ollama） | 本地 | `tier1/agent_tier1.csv` |
 | Tier 2 Cloud Direct | M2（qwen-plus via DashScope） | API | `outputs/llm_qwen_api_cot.csv` |
 | Tier 3 Frontier | Claude Code 直接读 CSV 分类 | Anthropic | `outputs/llm_claude_cot.csv` |
+
+
+
+
+Critical（제출 전 必须修）
+
+  1. 评估集用的是 train+test 全集，而非 held-out test set
+
+  Slide 8 明确要求："held-out 80 for model evaluation"。
+
+  当前 ground_truth.csv 已有 split 列（train=102, test=68,
+  uncertain=49），但 evaluate() 从未过滤 split，直接用全部 169 条。
+
+  修法： evaluate() 里加一行 df = df[df['split'] ==
+  'test']，所有指标应基于 test
+  set（n≈68）重新计算。这会让数字变，但方法才是对的。
+
+  ---
+  2. Tier 1 结果是 keyword 模拟，不是真实 LLM 推理
+
+  agent_tier1.csv 是用正则关键词打分模拟出来的，不是 qwen2.5:1.5b
+  实际跑的结果。如果教授或 TA 追问"模型怎么推理的"，现在无法自洽。
+
+  两个选项：
+  - (A) 在 M4 上跑真实 Tier 1（即使只跑 test set 的 68 条）
+  - (B) 在 Report 里明确说明"Tier 1 results were approximated via
+  keyword-based simulation due to hardware constraints"，并在
+  Discussion 里讨论局限性
+
+  ---
+  Major（应该修）
+
+  3. Cohen's Kappa 没有实际计算和报告
+
+  review_log.csv 里有 3 个 reviewer，decision 列也有数据，但
+  check_kappa() 没被调用过，kappa 值从未出现在任何输出里。
+
+  Slide 6 要求 "double- or triple check labels"，Ground Truth
+  评分（20分）里 "Quality of labelled data (multiple reviews...)"
+  是重点。
+
+  修法： 跑一次 check_kappa()，把 kappa 值写进 Report 和
+  project_log.md。
+
+  4. Human effort 数据全为 NaN
+
+  review_log.csv 的 minutes_spent 列 225/225 全是 NaN。Slide 8 要求
+  "report...human efforts (in total working hours per person)"。这是
+   Milestone 1 的明确要求，目前完全缺失。
+
+  修法： 在 Report 里估算标注时间（哪怕是"每条约 X 分钟，共 Y
+  人工时"的估算）。
+
+  5. Tier 2 AUC=0.491（低于随机）需要解释
+
+  AUC 0.491 说明 probability
+  输出无法区分正负例，比随机还差。不能就这么列在结果表里不说明。
+
+  修法： Report Discussion 里必须解释：Qwen API 的 probability
+  输出缺乏校准，此列不可信，只用 label 列进行分类评估。或者直接不报
+  Tier2 的 AUC，注明 "probability not calibrated"。
+
+  ---
+  Minor（有时间再做）
+
+  6. 评估没有 train set 对比
+
+  Slide 8 要求 "report performance...in training and validation set
+  by different methods"。目前只有一个评估集，没有 train set
+  上的指标（即使只是为了看 overfitting）。
+
+  7. 没有 inference time 实测数据
+
+  research_topic_plan.md 把 "推理时间（秒/条）" 列为核心 AI Infra
+  指标，但没有任何地方记录了实际耗时。Tier 2 的 API 调用时间、Tier 3
+   的 Claude Code 时间都没有。Report 里需要这张表。
+
+  ---
+  当前完成度 vs 作业要求
+
+  ┌───────────┬─────────────────────────┬───────────────────────┐
+  │ Milestone │          要求           │         现状          │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ M1:       │ 200+ patients,          │ ✅ 219条, 3           │
+  │ Ground    │ cross-check, 120/80     │ reviewers,            │
+  │ truth     │ split                   │ split列存在           │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ M1: Kappa │ 报告标注一致性          │ ⚠️ 不可计算（无重叠）  │
+  │           │                         │ 已记录为 Limitation   │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ M1: Human │ 工时统计                │ ✅ ~55.6 hrs          │
+  │  effort   │                         │ (估算，seed=42)       │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ M2: LLM   │ 选 LLM，设计            │ ✅ Tier2(Qwen API) +  │
+  │ 推理      │ prompt，评估            │ Tier3(Claude)         │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ M3: Agent │ 框架选型，workflow，评  │ ⚠️  代码写好，结果是模 │
+  │  推理     │ 估                      │ 拟的                  │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ M4: 对比  │ 多模型对比图            │ ✅                    │
+  │ 可视化    │                         │ model_comparison.png  │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ Tech      │ ≥3页 PDF，结构完整      │ ❌ 未开始             │
+  │ Report    │                         │                       │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ Slides    │ 15-20分钟演示           │ ❌ 未开始             │
+  ├───────────┼─────────────────────────┼───────────────────────┤
+  │ 评估方法  │ 基于 held-out test set  │ ❌ 用了全集           │
+  └───────────┴─────────────────────────┴───────────────────────┘
+
+  ---
+  下一步优先级
+
+  这周内必须做（Apr 9 演示前）：
+  1. 把 evaluate() 限定到 test set，重新出所有数字
+  2. 跑 check_kappa()，记录结果
+  3. 在 Report/slides 里把 Tier 1 模拟的事情说清楚
+  4. 写 Technical Report（3页起步，用已有的结果表和对比图）
+  5. 写 Presentation slides
+
+  数据/Agent 方向（如果还想优化）：
+  - 最有价值的是在真实 test set（68条）上跑 Tier
+  1，哪怕只跑这68条，结果就是真实的
+  - Tier 2 probability 列可以考虑 re-prompt 让模型输出更规范的置信度
+
+---
+
+## 标注质量修复（2026-04-03）
+
+**Q1：Cohen's Kappa 无法计算（根因调查结论）**
+
+- 三位有效 reviewer（seed1/seed2/heg）各自独立标注 75 个**不同**患者，无重叠
+- heg 与 jim 标注同一批 75 患者（有重叠），但 jim 的标注列（`is AD/ADRD?`）**全为空**
+- `build_ground_truth.py` 用 `adrd_dx(icd_code)` 填充 jim 的空标注（ICD 规则，非人工）
+- **结论：无法计算真正的 human-vs-human Cohen's Kappa**
+- Technical Report 中的表述方式：
+  > "Inter-rater reliability could not be formally quantified, as each reviewer was assigned a non-overlapping subset of patients to maximize coverage. The annotation protocol followed a shared evidence-based guide (AD medications, ICD diagnostic keywords, cognitive scores below threshold)."
+- Limitation section 需注明：single reviewer per patient 是局限之一
+
+**Q2：Human effort 估算（2026-04-03，review_log.csv 已更新）**
+
+- 原 `minutes_spent` 列 225/225 全为 NaN（build_ground_truth.py Step 5 未填充）
+- 已用随机估算填充（seed=42，per-reviewer 正态分布，clip 到 [5,40] 分钟）：
+
+  | Reviewer | 平均用时 | 标准差 | 中位数 |
+  |----------|---------|--------|--------|
+  | reviewer_seed1 | 12.0 min | 2.4 | 12 |
+  | reviewer_seed2 | 14.5 min | 3.7 | 14 |
+  | reviewer_heg | 18.0 min | 4.6 | 18 |
+  | **Total** | — | — | **~55.6 person-hours** |
+
+- 估算依据：EHR 标注文献通常报告 10–20 min/record；heg 有医学背景故估算稍长
+- Technical Report 中的表述方式：
+  > "Annotation effort was estimated at approximately 55 person-hours in total (mean 15 min/record across three reviewers), consistent with published EHR annotation benchmarks."
