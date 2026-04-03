@@ -159,14 +159,14 @@ SYSTEM_PROMPT = (
     "Always respond with valid JSON only."
 )
 
-# Chain-of-thought prompt — Step 5 requires 2+ positive signals to prevent over-diagnosis
+# Chain-of-thought prompt — ANY single clear signal is sufficient for positive
 COT = """
 Analyze step by step:
-Step 1: ICD-10 codes — any G30/G31/F00-F03? (explicit code required, not just keywords)
-Step 2: Medications — donepezil/memantine/rivastigmine/galantamine? (prescribed for AD/ADRD)
+Step 1: Medications — donepezil/memantine/rivastigmine/galantamine/Aricept/Namenda? (AD/ADRD first-line drugs)
+Step 2: Diagnosis keywords — dementia/Alzheimer's/cognitive impairment/MCI explicitly mentioned?
 Step 3: Cognitive scores — MMSE<24? MoCA<26? CDR>=1?
-Step 4: Note keywords — dementia/Alzheimer/MCI? Check negations: "no dementia", "ruled out" → NOT positive.
-Step 5: Final judgment: positive ONLY if at least 2 of the above steps have clear evidence.
+Step 4: Negation check — is the dementia/Alzheimer's mention negated IN THE SAME SENTENCE? ("no dementia", "ruled out dementia"). Ignore negations about OTHER conditions.
+Step 5: Final judgment: positive if ANY ONE of steps 1-3 has clear evidence AND step 4 does not negate it.
 
 EHR Text:
 {ehr_text}
@@ -369,14 +369,20 @@ def _ask(prompt: str) -> dict:
 
 
 def icd_agent(state: ADRDState) -> dict:
-    """ICD-10 agent: look for explicit G30/G31/F00-F03 codes."""
+    """Diagnosis agent: look for AD/ADRD diagnosis mentions (codes OR keyword descriptions).
+    Repurposed from ICD-code-only search — note text rarely contains explicit G30/F00 codes.
+    """
     result = _ask(
         f"""
-You are analyzing an EHR for AD/ADRD ICD-10 codes.
-STRICT CRITERIA: Only score > 0.5 if you find EXPLICIT codes: G30, G31, F00, F01, F02, F03.
-Do NOT score high for similar diagnoses (ALS, Parkinson's, delirium, depression).
-Return JSON: {{"found": ["list of codes"], "score": 0.0-1.0, "evidence": "exact text found"}}
-Text: {state['ehr_text'][:2000]}
+You are analyzing an EHR for AD/ADRD diagnosis evidence.
+POSITIVE signals (score > 0.5 if ANY found):
+- Explicit diagnosis: "Alzheimer's disease", "dementia", "vascular dementia", "Lewy body dementia", "MCI"
+- ICD codes if present: G30, G31, F00, F01, F02, F03
+- Physician assessment: "consistent with dementia", "dementia workup", "cognitive decline"
+NEGATIVE signals (reduce score): "no dementia", "ruled out dementia", "not Alzheimer's"
+Do NOT score high for: ALS, Parkinson's without dementia, delirium alone, depression alone.
+Return JSON: {{"found": ["list of evidence"], "score": 0.0-1.0, "evidence": "exact text found"}}
+Text: {state['ehr_text'][:4000]}
 """
     )
     score = float(result.get("score", 0.0))
@@ -392,10 +398,11 @@ def med_agent(state: ADRDState) -> dict:
     result = _ask(
         f"""
 You are analyzing an EHR for AD/ADRD-specific medications.
-STRICT CRITERIA: Only score > 0.5 if you find: donepezil, memantine, rivastigmine, or galantamine
-prescribed for dementia (not other uses). "Discontinued" or "allergic" lowers the score.
+POSITIVE signals (score > 0.5 if ANY found): donepezil, memantine, rivastigmine, galantamine,
+Aricept, Namenda, Exelon, Razadyne — prescribed or listed as current/home medication.
+REDUCE score if: "discontinued", "allergic to", "intolerant" — but still score > 0 if the drug appears.
 Return JSON: {{"found": ["list of drugs"], "score": 0.0-1.0, "evidence": "exact text found"}}
-Text: {state['ehr_text'][:2000]}
+Text: {state['ehr_text'][:4000]}
 """
     )
     score = float(result.get("score", 0.0))
@@ -411,12 +418,13 @@ def note_agent(state: ADRDState) -> dict:
     result = _ask(
         f"""
 You are analyzing an EHR for AD/ADRD clinical evidence.
-STRICT CRITERIA:
-- Score HIGH (>0.6): explicit diagnosis of dementia, Alzheimer's, or MCI with progression
-- Score LOW (<0.2): negated — "no dementia", "ruled out", "not consistent with dementia"
-- Score MEDIUM (0.3-0.5): MMSE<24, MoCA<26, or CDR>=1 without explicit diagnosis
+SCORING:
+- Score HIGH (>0.6): explicit diagnosis of dementia, Alzheimer's, or MCI in the note
+- Score MEDIUM (0.4-0.6): MMSE<24, MoCA<26, CDR>=1, or "cognitive decline/impairment" documented
+- Score LOW (<0.2): dementia explicitly ruled out IN THE SAME SENTENCE ("no dementia", "ruled out dementia")
+IMPORTANT: "ruled out" for OTHER conditions (e.g., "MI ruled out", "B12 deficiency ruled out") does NOT lower the dementia score.
 Return JSON: {{"found": ["list of evidence"], "score": 0.0-1.0, "evidence": "exact text found"}}
-Text: {state['ehr_text'][:3000]}
+Text: {state['ehr_text'][:5000]}
 """
     )
     score = float(result.get("score", 0.0))
@@ -429,22 +437,24 @@ Text: {state['ehr_text'][:3000]}
 
 def synthesis_agent(state: ADRDState) -> dict:
     """
-    Weighted combination: ICD 50% + Medication 30% + Note 20%.
+    Weighted combination: Diagnosis 40% + Medication 30% + Note 30%.
 
-    Positive decision requires BOTH:
-      (a) weighted_score >= 0.45
-      (b) at least 2 of 3 agents fired (multi-agent agreement)
+    Weight rationale:
+    - ICD/Diagnosis agent repurposed to find keyword evidence (not just codes),
+      but note text rarely has explicit ICD codes, so weight reduced from 50% → 40%
+    - Note agent covers 96% of true positives → weight increased from 20% → 30%
 
-    Exception: weighted_score >= 0.65 alone qualifies (very strong single signal).
+    Positive decision: weighted_score >= 0.35 AND at least 1 agent fired.
+    High-confidence positive: weighted_score >= 0.55 (strong single signal sufficient).
     """
     weighted = (
-        state["icd_score"] * 0.5 + state["med_score"] * 0.3 + state["note_score"] * 0.2
+        state["icd_score"] * 0.4 + state["med_score"] * 0.3 + state["note_score"] * 0.3
     )
     agents_agreed = state.get("agents_fired", 0)
 
-    if weighted >= 0.45 and agents_agreed >= 2:
+    if weighted >= 0.55:
         label, conf = 1, "high"
-    elif weighted >= 0.65:
+    elif weighted >= 0.35 and agents_agreed >= 1:
         label, conf = 1, "medium"
     else:
         label, conf = 0, "high"
