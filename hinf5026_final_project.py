@@ -1,14 +1,11 @@
 """
 HINF 5026 Final Project — AD/ADRD Identification from EHR
-Revised by Codex Review | 2026-03-27
-Stack: Python + Ollama (qwen2.5:0.5b) + LangGraph
+Three-Tier Benchmark: Edge Agent | Cloud Direct | Frontier
+Stack: Python + Ollama (qwen2.5:1.5b) + LangGraph
 """
 
-# ============================================================
-# 0. SETUP
-# pip install ollama langgraph pandas scikit-learn matplotlib seaborn jupyter python-dotenv
-# brew install ollama && ollama pull qwen2.5:0.5b
-# ============================================================
+import os
+import operator
 
 # ============================================================
 # 1. EHR TEXT PREPROCESSING
@@ -23,7 +20,7 @@ RELEVANT_SECTIONS = [
     "discharge summary",
     "problem list",
 ]
-MAX_CHARS = 6000  # safe range for qwen2.5:0.5b (32K context)
+MAX_CHARS = 6000
 
 
 def extract_relevant_text(full_ehr: str) -> str:
@@ -50,15 +47,14 @@ from sklearn.metrics import cohen_kappa_score
 
 
 def create_annotation_template(patient_ids: list, output_path: str):
-    """Create blank annotation CSV template."""
     df = pd.DataFrame(
         {
             "patient_id": patient_ids,
-            "label": "",  # 1 / 0 / uncertain
-            "evidence_type": "",  # ICD / Medication / CogTest / Note / None
-            "evidence_text": "",  # supporting quote from EHR
-            "negation": "",  # yes / no
-            "confidence": "",  # High / Medium / Low
+            "label": "",
+            "evidence_type": "",
+            "evidence_text": "",
+            "negation": "",
+            "confidence": "",
             "annotator": "",
             "notes": "",
         }
@@ -68,12 +64,14 @@ def create_annotation_template(patient_ids: list, output_path: str):
 
 
 def check_kappa(file_a: str, file_b: str) -> float:
-    """Compute Cohen's Kappa between two annotators."""
-    a = pd.read_csv(file_a).set_index("patient_id")["label"]
-    b = pd.read_csv(file_b).set_index("patient_id")["label"]
+    """Compute Cohen's Kappa between two annotators using y_true in ground_truth."""
+    a = pd.read_csv(file_a).set_index("patient_id")["y_true"]
+    b = pd.read_csv(file_b).set_index("patient_id")["y_true"]
     common = a.index.intersection(b.index)
-    kappa = cohen_kappa_score(a[common], b[common])
-    print(f"Cohen's Kappa = {kappa:.3f}")
+    a_common = a[common].dropna()
+    b_common = b[common][a_common.index]
+    kappa = cohen_kappa_score(a_common, b_common)
+    print(f"Cohen's Kappa = {kappa:.3f}  (n={len(a_common)})")
     if kappa >= 0.8:
         print("  >> Excellent")
     elif kappa >= 0.6:
@@ -88,21 +86,58 @@ def check_kappa(file_a: str, file_b: str) -> float:
 # ============================================================
 
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
+import numpy as np
 
 
 def evaluate(y_true, y_pred, y_prob=None, model_name: str = "") -> dict:
     """
-    Compute Precision/PPV, Recall/Sensitivity, F1, ROC-AUC.
-    y_prob: probability scores for AUC (required for ROC-AUC).
+    Compute Precision/PPV, Recall/Sensitivity, Specificity, F1, ROC-AUC.
+    Filters out rows where y_true or y_pred are not in {0, 1}.
     """
+    y_true = list(y_true)
+    y_pred = list(y_pred)
+    y_prob_list = list(y_prob) if y_prob is not None else None
+
+    valid_idx = [
+        i for i, (t, p) in enumerate(zip(y_true, y_pred)) if t in (0, 1) and p in (0, 1)
+    ]
+    if len(valid_idx) < len(y_true):
+        print(
+            f"  [INFO] Dropped {len(y_true) - len(valid_idx)} rows with invalid labels"
+        )
+
+    yt = [y_true[i] for i in valid_idx]
+    yp = [y_pred[i] for i in valid_idx]
+    yprob = [y_prob_list[i] for i in valid_idx] if y_prob_list else None
+
+    # Specificity = TN / (TN + FP)
+    tn = sum(1 for t, p in zip(yt, yp) if t == 0 and p == 0)
+    fp = sum(1 for t, p in zip(yt, yp) if t == 0 and p == 1)
+    specificity = round(tn / (tn + fp), 4) if (tn + fp) > 0 else 0.0
+
+    # AUC — drop NaN probabilities
+    auc_val = "N/A"
+    if yprob is not None:
+        pairs = [
+            (t, p)
+            for t, p in zip(yt, yprob)
+            if p is not None and not (isinstance(p, float) and np.isnan(p))
+        ]
+        if pairs:
+            t_clean, p_clean = zip(*pairs)
+            try:
+                auc_val = round(roc_auc_score(list(t_clean), list(p_clean)), 4)
+            except Exception:
+                auc_val = "N/A"
+
     result = {
         "model": model_name,
-        "precision_ppv": round(precision_score(y_true, y_pred), 4),
-        "recall_sensitivity": round(recall_score(y_true, y_pred), 4),
-        "f1": round(f1_score(y_true, y_pred), 4),
-        "roc_auc": (
-            round(roc_auc_score(y_true, y_prob), 4) if y_prob is not None else "N/A"
-        ),
+        "precision_ppv": round(precision_score(yt, yp, zero_division=0), 4),
+        "recall_sensitivity": round(recall_score(yt, yp, zero_division=0), 4),
+        "specificity": specificity,
+        "f1": round(f1_score(yt, yp, zero_division=0), 4),
+        "roc_auc": auc_val,
+        "n": len(yt),
     }
     print(f"\n=== {model_name} ===")
     for k, v in result.items():
@@ -112,28 +147,33 @@ def evaluate(y_true, y_pred, y_prob=None, model_name: str = "") -> dict:
 
 
 # ============================================================
-# 4. OLLAMA CLIENT (Qwen2.5 / Llama)
+# 4. LLM CLIENT (Ollama local / Qwen API)
 # ============================================================
 
 import ollama
 import json
-
-LABEL_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "label": {"type": "integer", "enum": [0, 1]},
-        "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
-        "evidence": {"type": "string"},
-        "probability": {"type": "number", "minimum": 0, "maximum": 1},
-    },
-    "required": ["label", "confidence", "evidence", "probability"],
-}
 
 SYSTEM_PROMPT = (
     "You are a clinical NLP expert specializing in identifying Alzheimer's Disease "
     "and Related Dementias (AD/ADRD) from electronic health records. "
     "Always respond with valid JSON only."
 )
+
+# Chain-of-thought prompt — Step 5 requires 2+ positive signals to prevent over-diagnosis
+COT = """
+Analyze step by step:
+Step 1: ICD-10 codes — any G30/G31/F00-F03? (explicit code required, not just keywords)
+Step 2: Medications — donepezil/memantine/rivastigmine/galantamine? (prescribed for AD/ADRD)
+Step 3: Cognitive scores — MMSE<24? MoCA<26? CDR>=1?
+Step 4: Note keywords — dementia/Alzheimer/MCI? Check negations: "no dementia", "ruled out" → NOT positive.
+Step 5: Final judgment: positive ONLY if at least 2 of the above steps have clear evidence.
+
+EHR Text:
+{ehr_text}
+
+Return JSON: label (0 or 1), confidence (high/medium/low),
+evidence (summary of key findings), probability (0.0-1.0), reasoning (brief).
+"""
 
 
 def call_llm(
@@ -142,7 +182,6 @@ def call_llm(
     """
     Call LLM with forced JSON output.
     provider: "ollama" (local) or "qwen" (Qwen API via DashScope).
-    Falls back to error dict if JSON parsing fails.
     """
     try:
         if provider == "qwen":
@@ -173,7 +212,6 @@ def call_llm(
             raw = response["message"]["content"]
         return json.loads(raw)
     except json.JSONDecodeError as e:
-        print(f"  [WARN] JSON parse failed: {e}")
         return {
             "label": -1,
             "confidence": "error",
@@ -191,52 +229,50 @@ def call_llm(
 
 
 # ============================================================
-# 5. PROMPT TEMPLATES
-# ============================================================
-
-ZERO_SHOT = """
-Analyze the EHR text below. Does this patient have AD/ADRD?
-Return JSON with: label (0 or 1), confidence (high/medium/low),
-evidence (key supporting text), probability (0.0-1.0).
-
-EHR Text:
-{ehr_text}
-"""
-
-FEW_SHOT = """
-Examples:
-Input: "G30.9 Alzheimer's disease. Started donepezil 10mg daily."
-Output: {{"label":1,"confidence":"high","evidence":"G30.9, donepezil","probability":0.95}}
-
-Input: "Patient reports mild forgetfulness. MMSE 28/30. No dementia diagnosis."
-Output: {{"label":0,"confidence":"high","evidence":"MMSE 28, no diagnosis","probability":0.05}}
-
-Now analyze:
-{ehr_text}
-Return JSON only.
-"""
-
-COT = """
-Analyze step by step:
-Step 1: ICD-10 codes — any G30/G31/F00-F03?
-Step 2: Medications — donepezil/memantine/rivastigmine/galantamine?
-Step 3: Cognitive scores — MMSE<24? MoCA<26? CDR>=1?
-Step 4: Note keywords — dementia/Alzheimer/MCI? Any negations (e.g. "no dementia")?
-Step 5: Final judgment based on steps 1-4.
-
-EHR Text:
-{ehr_text}
-
-Return JSON: label (0 or 1), confidence (high/medium/low),
-evidence (summary), probability (0.0-1.0), reasoning (brief).
-"""
-
-
-# ============================================================
-# 6. BATCH LLM INFERENCE
+# 5. BATCH LLM INFERENCE (Tier 2: Cloud Direct — single call_llm)
 # ============================================================
 
 import time
+
+
+def _load_notes(data_csv: str) -> pd.DataFrame:
+    """Load patient notes CSV, auto-detect columns, deduplicate by patient_id.
+    Answer to Q1: patient_notes.csv has 300 rows but only 219 unique patients.
+    This function deduplicates so inference runs exactly once per patient.
+    """
+    df = pd.read_csv(data_csv)
+
+    text_col = next(
+        (
+            c
+            for c in [
+                "ehr_text",
+                "note_text",
+                "patient_note",
+                "note",
+                "text",
+                "content",
+            ]
+            if c in df.columns
+        ),
+        None,
+    )
+    if text_col is None:
+        raise ValueError(f"No EHR text column found. Available: {list(df.columns)}")
+
+    id_col = next(
+        (c for c in ["patient_id", "subject_id", "id"] if c in df.columns), None
+    )
+    if id_col is None:
+        raise ValueError(f"No patient id column found. Available: {list(df.columns)}")
+
+    before = len(df)
+    df = df.drop_duplicates(subset=[id_col])
+    if len(df) < before:
+        print(f"  [INFO] Deduplicated {before} → {len(df)} unique patients")
+
+    df = df.rename(columns={text_col: "ehr_text", id_col: "patient_id"})
+    return df[["patient_id", "ehr_text"]]
 
 
 def run_batch_inference(
@@ -246,76 +282,44 @@ def run_batch_inference(
     template: str = COT,
     provider: str = "ollama",
 ):
-    """
-    Run LLM inference on all patients in data_csv.
-    provider: "ollama" (local Ollama) or "qwen" (Qwen API).
-    Saves predictions to output_csv.
-    """
-    df = pd.read_csv(data_csv)
+    """Run single-call LLM inference on all unique patients (Tier 2: Cloud Direct)."""
+    df = _load_notes(data_csv)
+    sleep_time = 0.0 if provider == "qwen" else (1.0 if "0.5b" in model else 0.3)
     results = []
 
-    # 自动识别病历文本列名
-    text_col = None
-    for candidate in [
-        "ehr_text",
-        "note_text",
-        "patient_note",
-        "note",
-        "text",
-        "content",
-    ]:
-        if candidate in df.columns:
-            text_col = candidate
-            break
-    if text_col is None:
-        raise ValueError(
-            f"Could not find EHR text column in {data_csv}. "
-            f"Available columns: {list(df.columns)}"
-        )
-
-    # 自动识别患者ID列名
-    id_col = None
-    for candidate in ["patient_id", "subject_id", "id"]:
-        if candidate in df.columns:
-            id_col = candidate
-            break
-    if id_col is None:
-        raise ValueError(
-            f"Could not find patient id column in {data_csv}. "
-            f"Available columns: {list(df.columns)}"
-        )
-
-    # Qwen API 无需 sleep；Ollama 小模型需要限速
-    sleep_time = 0.0 if provider == "qwen" else (1.0 if "0.5b" in model else 0.3)
-
     for i, row in df.iterrows():
-        patient_id = row[id_col]
-        print(f"[{i+1}/{len(df)}] patient {patient_id} ({provider})")
-        ehr = extract_relevant_text(str(row[text_col]))
+        print(f"[{i+1}/{len(df)}] patient {row['patient_id']} ({provider})")
+        ehr = extract_relevant_text(str(row["ehr_text"]))
         prompt = template.format(ehr_text=ehr)
         result = call_llm(prompt, model, provider)
-        result["patient_id"] = patient_id
+        result["patient_id"] = row["patient_id"]
         results.append(result)
         if sleep_time > 0:
             time.sleep(sleep_time)
 
     out_df = pd.DataFrame(results)
     out_df.to_csv(output_csv, index=False)
-    print(f"\nSaved: {output_csv} ({len(out_df)} rows)")
+    print(f"Saved: {output_csv} ({len(out_df)} rows)")
     return out_df
 
 
 # ============================================================
-# 7. AGENT PIPELINE (LangGraph — Parallel Fan-out)
+# 6. AGENT PIPELINE (Tier 1: Edge Agent — LangGraph Parallel Fan-out)
 # ============================================================
 #
 # Architecture:
 #   START ──┬── ICD Agent ────┬──> Synthesis ──> END
 #           ├── Med Agent ────┤
 #           └── Note Agent ───┘
+#
+# Optimization vs baseline (dx_only: sensitivity=1.0, specificity=0.43):
+#   Synthesis requires BOTH:
+#     (a) weighted_score >= 0.45, AND
+#     (b) at least 2 of 3 agents fired (multi-agent agreement)
+#   This reduces false positives while preserving true positives.
 
 from langgraph.graph import StateGraph, START, END
-from typing import TypedDict, List, Optional
+from typing import TypedDict, List, Optional, Annotated
 
 
 class ADRDState(TypedDict):
@@ -324,14 +328,17 @@ class ADRDState(TypedDict):
     icd_score: float
     med_score: float
     note_score: float
+    agents_fired: int
     final_label: Optional[int]
     confidence: Optional[str]
     probability: Optional[float]
-    evidence_chain: List[str]
+    # Annotated with operator.add: parallel branches safely append without overwriting
+    evidence_chain: Annotated[List[str], operator.add]
 
 
 _MODEL = "qwen2.5:1.5b"
 _PROVIDER = "ollama"
+AGENT_FIRE_THRESHOLD = 0.35
 
 
 def _ask(prompt: str) -> dict:
@@ -362,63 +369,92 @@ def _ask(prompt: str) -> dict:
 
 
 def icd_agent(state: ADRDState) -> dict:
+    """ICD-10 agent: look for explicit G30/G31/F00-F03 codes."""
     result = _ask(
         f"""
-Find AD/ADRD ICD-10 codes (G30, G31, F00-F03) in this text.
-Return JSON: {{"found": [], "score": 0.0-1.0, "evidence": ""}}
+You are analyzing an EHR for AD/ADRD ICD-10 codes.
+STRICT CRITERIA: Only score > 0.5 if you find EXPLICIT codes: G30, G31, F00, F01, F02, F03.
+Do NOT score high for similar diagnoses (ALS, Parkinson's, delirium, depression).
+Return JSON: {{"found": ["list of codes"], "score": 0.0-1.0, "evidence": "exact text found"}}
 Text: {state['ehr_text'][:2000]}
 """
     )
-    score = result.get("score", 0.0)
-    chain = list(state["evidence_chain"])
-    if score > 0.3 and result.get("evidence"):
-        chain.append(f"ICD: {result['evidence']}")
-    return {"icd_score": score, "evidence_chain": chain}
+    score = float(result.get("score", 0.0))
+    new_evidence = []
+    fired = 1 if score > AGENT_FIRE_THRESHOLD and result.get("evidence") else 0
+    if fired:
+        new_evidence.append(f"ICD: {result['evidence']}")
+    return {"icd_score": score, "evidence_chain": new_evidence, "agents_fired": fired}
 
 
 def med_agent(state: ADRDState) -> dict:
+    """Medication agent: look for cholinesterase inhibitors / memantine."""
     result = _ask(
         f"""
-Find AD/ADRD medications (donepezil/memantine/rivastigmine/galantamine) in this text.
-Return JSON: {{"found": [], "score": 0.0-1.0, "evidence": ""}}
+You are analyzing an EHR for AD/ADRD-specific medications.
+STRICT CRITERIA: Only score > 0.5 if you find: donepezil, memantine, rivastigmine, or galantamine
+prescribed for dementia (not other uses). "Discontinued" or "allergic" lowers the score.
+Return JSON: {{"found": ["list of drugs"], "score": 0.0-1.0, "evidence": "exact text found"}}
 Text: {state['ehr_text'][:2000]}
 """
     )
-    score = result.get("score", 0.0)
-    chain = list(state["evidence_chain"])
-    if score > 0.3 and result.get("evidence"):
-        chain.append(f"Med: {result['evidence']}")
-    return {"med_score": score, "evidence_chain": chain}
+    score = float(result.get("score", 0.0))
+    new_evidence = []
+    fired = 1 if score > AGENT_FIRE_THRESHOLD and result.get("evidence") else 0
+    if fired:
+        new_evidence.append(f"Med: {result['evidence']}")
+    return {"med_score": score, "evidence_chain": new_evidence, "agents_fired": fired}
 
 
 def note_agent(state: ADRDState) -> dict:
+    """Clinical note agent: extract cognitive decline evidence with negation handling."""
     result = _ask(
         f"""
-Find cognitive decline evidence (dementia/Alzheimer/MCI/MMSE<24/MoCA<26) in this text.
-Handle negations: "no dementia" or "dementia ruled out" → score near 0.
-Return JSON: {{"found": [], "score": 0.0-1.0, "evidence": ""}}
+You are analyzing an EHR for AD/ADRD clinical evidence.
+STRICT CRITERIA:
+- Score HIGH (>0.6): explicit diagnosis of dementia, Alzheimer's, or MCI with progression
+- Score LOW (<0.2): negated — "no dementia", "ruled out", "not consistent with dementia"
+- Score MEDIUM (0.3-0.5): MMSE<24, MoCA<26, or CDR>=1 without explicit diagnosis
+Return JSON: {{"found": ["list of evidence"], "score": 0.0-1.0, "evidence": "exact text found"}}
 Text: {state['ehr_text'][:3000]}
 """
     )
-    score = result.get("score", 0.0)
-    chain = list(state["evidence_chain"])
-    if score > 0.3 and result.get("evidence"):
-        chain.append(f"Note: {result['evidence']}")
-    return {"note_score": score, "evidence_chain": chain}
+    score = float(result.get("score", 0.0))
+    new_evidence = []
+    fired = 1 if score > AGENT_FIRE_THRESHOLD and result.get("evidence") else 0
+    if fired:
+        new_evidence.append(f"Note: {result['evidence']}")
+    return {"note_score": score, "evidence_chain": new_evidence, "agents_fired": fired}
 
 
 def synthesis_agent(state: ADRDState) -> dict:
-    """Weighted combination: ICD 50% + Medication 30% + Note 20%."""
+    """
+    Weighted combination: ICD 50% + Medication 30% + Note 20%.
+
+    Positive decision requires BOTH:
+      (a) weighted_score >= 0.45
+      (b) at least 2 of 3 agents fired (multi-agent agreement)
+
+    Exception: weighted_score >= 0.65 alone qualifies (very strong single signal).
+    """
     weighted = (
         state["icd_score"] * 0.5 + state["med_score"] * 0.3 + state["note_score"] * 0.2
     )
-    if weighted >= 0.6:
+    agents_agreed = state.get("agents_fired", 0)
+
+    if weighted >= 0.45 and agents_agreed >= 2:
         label, conf = 1, "high"
-    elif weighted >= 0.3:
-        label, conf = 1, "medium"  # consider manual review
+    elif weighted >= 0.65:
+        label, conf = 1, "medium"
     else:
         label, conf = 0, "high"
-    return {"final_label": label, "confidence": conf, "probability": round(weighted, 4)}
+
+    return {
+        "final_label": label,
+        "confidence": conf,
+        "probability": round(weighted, 4),
+        "agents_fired": agents_agreed,
+    }
 
 
 # Build parallel graph
@@ -447,6 +483,7 @@ def run_agent(patient_id: str, ehr_text: str) -> dict:
         icd_score=0.0,
         med_score=0.0,
         note_score=0.0,
+        agents_fired=0,
         final_label=None,
         confidence=None,
         probability=None,
@@ -458,7 +495,11 @@ def run_agent(patient_id: str, ehr_text: str) -> dict:
         "label": result["final_label"],
         "confidence": result["confidence"],
         "probability": result["probability"],
-        "evidence": result["evidence_chain"],
+        "agents_fired": result.get("agents_fired", 0),
+        "evidence": " | ".join(result["evidence_chain"]),
+        "icd_score": result["icd_score"],
+        "med_score": result["med_score"],
+        "note_score": result["note_score"],
     }
 
 
@@ -468,98 +509,89 @@ def run_agent_batch(
     model: str = "qwen2.5:1.5b",
     provider: str = "ollama",
 ):
-    """Run agent pipeline on all patients in data_csv.
-    provider: "ollama" (local) or "qwen" (Qwen API).
-    """
+    """Run Tier 1 Edge Agent on all unique patients in data_csv."""
     global _MODEL, _PROVIDER
     _MODEL = model
     _PROVIDER = provider
 
-    df = pd.read_csv(data_csv)
+    df = _load_notes(data_csv)
+    sleep_time = 0.0 if provider == "qwen" else (1.0 if "0.5b" in model else 0.3)
     results = []
 
-    # 自动识别病历文本列名
-    text_col = None
-    for candidate in [
-        "ehr_text",
-        "note_text",
-        "patient_note",
-        "note",
-        "text",
-        "content",
-    ]:
-        if candidate in df.columns:
-            text_col = candidate
-            break
-    if text_col is None:
-        raise ValueError(
-            f"Could not find EHR text column in {data_csv}. "
-            f"Available columns: {list(df.columns)}"
-        )
-
-    # 自动识别患者ID列名
-    id_col = None
-    for candidate in ["patient_id", "subject_id", "id"]:
-        if candidate in df.columns:
-            id_col = candidate
-            break
-    if id_col is None:
-        raise ValueError(
-            f"Could not find patient id column in {data_csv}. "
-            f"Available columns: {list(df.columns)}"
-        )
-
-    sleep_time = 0.0 if provider == "qwen" else (1.0 if "0.5b" in model else 0.3)
-
     for i, row in df.iterrows():
-        patient_id = row[id_col]
-        print(f"[{i+1}/{len(df)}] agent: patient {patient_id} ({provider})")
-        r = run_agent(patient_id, str(row[text_col]))
+        print(f"[{i+1}/{len(df)}] agent: patient {row['patient_id']} ({provider})")
+        r = run_agent(row["patient_id"], str(row["ehr_text"]))
         results.append(r)
         if sleep_time > 0:
             time.sleep(sleep_time)
 
     out = pd.DataFrame(results)
     out.to_csv(output_csv, index=False)
-    print(f"\nAgent results saved: {output_csv}")
+    print(f"Agent results saved: {output_csv} ({len(out)} rows)")
     return out
 
 
 # ============================================================
-# 8. FINAL COMPARISON (run all models and plot)
+# 7. TIER 3 NOTE — Claude Code Frontier Annotator
+# ============================================================
+# Tier 3 does NOT run via this script.
+# Claude Code reads patient_notes.csv directly and classifies each note.
+# Required output format: patient_id, label (0/1), probability (0.0-1.0), evidence
+# Save to: outputs/llm_claude_cot.csv
+
+
+# ============================================================
+# 8. FINAL COMPARISON
 # ============================================================
 
 import matplotlib.pyplot as plt
 
 
 def compare_all_models(
-    ground_truth_csv: str, results_map: dict, output_fig: str = "model_comparison.png"
+    ground_truth_csv: str,
+    results_map: dict,
+    output_fig: str = "model_comparison.png",
 ):
     """
-    ground_truth_csv: CSV with columns [patient_id, true_label]
-    results_map: dict of {model_name: predictions_csv_path}
-                 each CSV needs [patient_id, label, probability(optional)]
+    ground_truth_csv: CSV with columns [patient_id, y_true]
+    results_map: {model_name: predictions_csv_path}
+                  each CSV needs [patient_id, label, probability(optional)]
     """
     gt = pd.read_csv(ground_truth_csv)
+    gt = gt.dropna(subset=["patient_id"])
+    gt = gt[gt["y_true"].isin([0, 1])]  # exclude uncertain (-1)
+    gt = gt.drop_duplicates(subset=["patient_id"])
+    pos = int(gt["y_true"].sum())
+    neg = int((gt["y_true"] == 0).sum())
+    print(f"Ground truth: {len(gt)} patients (pos={pos}, neg={neg})")
+
     all_results = []
 
     for name, path in results_map.items():
+        if not os.path.exists(path):
+            print(f"  [SKIP] {name}: not found — {path}")
+            continue
         df = pd.read_csv(path)
+        df = df.drop_duplicates(subset=["patient_id"])
         merged = gt.merge(df, on="patient_id")
         prob = (
             merged["probability"].tolist() if "probability" in merged.columns else None
         )
         r = evaluate(
-            merged["true_label"].tolist(),
+            merged["y_true"].tolist(),
             merged["label"].tolist(),
             y_prob=prob,
             model_name=name,
         )
         all_results.append(r)
 
+    if not all_results:
+        print("No results to compare.")
+        return None
+
     rdf = pd.DataFrame(all_results).set_index("model")
-    metrics = ["precision_ppv", "recall_sensitivity", "f1"]
-    if rdf["roc_auc"].dtype != object:
+    metrics = ["precision_ppv", "recall_sensitivity", "specificity", "f1"]
+    if rdf["roc_auc"].apply(lambda x: isinstance(x, float)).all():
         metrics.append("roc_auc")
 
     rdf[metrics].plot(
@@ -574,59 +606,64 @@ def compare_all_models(
 
 
 # ============================================================
-# EXAMPLE USAGE
+# MAIN
 # ============================================================
 if __name__ == "__main__":
-    import os
-
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
-    RESULT_DIR = os.path.join(OUTPUT_DIR, "results")
+    TIER1_DIR = os.path.join(BASE_DIR, "tier1")
     INPUT_CSV = os.path.join(BASE_DIR, "data", "patient_notes", "patient_notes.csv")
 
-    os.makedirs(RESULT_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(TIER1_DIR, exist_ok=True)
 
-    # --- Step 1: run LLM inference (CoT, local qwen2.5:1.5b on M4) ---
-    run_batch_inference(
-        data_csv=INPUT_CSV,
-        output_csv=os.path.join(RESULT_DIR, "llm_qwen_cot.csv"),
-        model="qwen2.5:1.5b",
-        template=COT,
-        provider="ollama",
-    )
-
-    # --- Step 2: run LLM inference (CoT, Qwen API for comparison) ---
-    # Requires: pip install openai && export DASHSCOPE_API_KEY=...
-    run_batch_inference(
-        data_csv=INPUT_CSV,
-        output_csv=os.path.join(RESULT_DIR, "llm_qwen_api_cot.csv"),
-        model="qwen-plus",
-        template=COT,
-        provider="qwen",
-    )
-
-    # --- Step 3: run agent pipeline (local qwen2.5:1.5b) ---
+    # ----------------------------------------------------------
+    # Step 1: Tier 1 — Edge Agent (local qwen2.5:1.5b, M4 only)
+    #   Runs 219 times (deduplicated), NOT 300
+    # ----------------------------------------------------------
     run_agent_batch(
         data_csv=INPUT_CSV,
-        output_csv=os.path.join(RESULT_DIR, "agent_qwen.csv"),
+        output_csv=os.path.join(TIER1_DIR, "agent_tier1.csv"),
         model="qwen2.5:1.5b",
         provider="ollama",
     )
 
-    # --- Step 5: compare all models ---
-    if os.path.exists(os.path.join(BASE_DIR, "ground_truth.csv")):
+    # ----------------------------------------------------------
+    # Step 2: Tier 2 — Cloud Direct (qwen-plus, no Agent)
+    #   Requires: export DASHSCOPE_API_KEY=sk-...
+    #   Skipped automatically if key not set
+    # ----------------------------------------------------------
+    if os.environ.get("DASHSCOPE_API_KEY"):
+        run_batch_inference(
+            data_csv=INPUT_CSV,
+            output_csv=os.path.join(OUTPUT_DIR, "llm_qwen_api_cot.csv"),
+            model="qwen-plus",
+            template=COT,
+            provider="qwen",
+        )
+    else:
+        print("DASHSCOPE_API_KEY not set — skipping Tier 2 (Cloud Direct)")
+
+    # ----------------------------------------------------------
+    # Step 3: Compare all tiers
+    #   Add Tier 3 path below once Claude Code run is complete
+    # ----------------------------------------------------------
+    GT_CSV = os.path.join(OUTPUT_DIR, "ground_truth.csv")
+    if os.path.exists(GT_CSV):
         compare_all_models(
-            ground_truth_csv=os.path.join(BASE_DIR, "ground_truth.csv"),
+            ground_truth_csv=GT_CSV,
             results_map={
-                "Baseline (DX Only)": os.path.join(BASE_DIR, "dx_only_baseline.csv"),
-                "LLM Zero-shot": os.path.join(RESULT_DIR, "llm_zeroshot.csv"),
-                "LLM Few-shot": os.path.join(RESULT_DIR, "llm_fewshot.csv"),
-                "LLM CoT": os.path.join(RESULT_DIR, "llm_cot.csv"),
-                "Multi-Agent": os.path.join(RESULT_DIR, "agent.csv"),
+                "Tier0 Baseline (DX Only)": os.path.join(
+                    OUTPUT_DIR, "dx_only_baseline.csv"
+                ),
+                "Tier1 Edge Agent": os.path.join(TIER1_DIR, "agent_tier1.csv"),
+                "Tier2 Cloud Direct": os.path.join(OUTPUT_DIR, "llm_qwen_api_cot.csv"),
+                # Uncomment after Tier 3 (Claude Code) run:
+                # "Tier3 Frontier (Claude)": os.path.join(OUTPUT_DIR, "llm_claude_cot.csv"),
             },
             output_fig=os.path.join(BASE_DIR, "model_comparison_plot.png"),
         )
     else:
-        print("⚠️ 没有 ground_truth.csv，跳过 Step 5")
+        print("No ground_truth.csv — skip comparison")
 
-    print("✅ 全流程运行完成！")
+    print("Done.")

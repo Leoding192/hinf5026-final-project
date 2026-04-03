@@ -1,3 +1,5 @@
+@~/claude-os/CLAUDE.md
+
 # HINF 5026 Final Project
 
 ## 项目信息
@@ -165,7 +167,7 @@
 
 ### Milestone 3：Agent 架构
 - [ ] 实现 LangGraph Agent（Module 5-6）：并行 fan-out + 加权 synthesis
-- [ ] 跑 Agent 推理，生成 outputs/agent_predictions.csv
+- [ ] 跑 Agent 推理，生成 outputs/
 - [ ] 评估 Agent 性能
 
 ### Milestone 4：对比 & 可视化
