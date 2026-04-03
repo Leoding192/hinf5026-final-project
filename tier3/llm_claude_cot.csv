@@ -1,0 +1,220 @@
+patient_id,label,probability,confidence,evidence
+13312152.0,1,1.0,high,"keywords: ['alzheimer', 'dementia', 'frontotemporal']; meds: ['donepezil']; neg: False"
+15729286.0,1,0.9,high,"keywords: ['dementia', 'cognitive impairment']; meds: ['donepezil', 'aricept']; neg: True"
+11311156.0,1,0.9,high,"keywords: ['dementia']; meds: ['rivastigmine', 'exelon']; neg: False"
+14235477.0,0,0.0,high,keywords: ['frontotemporal']; meds: []; neg: True
+12206010.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+16073325.0,0,0.0,high,"keywords: ['dementia', 'vascular dementia']; meds: []; neg: True"
+19464551.0,0,0.0,medium,"keywords: ['dementia', 'cognitive impairment']; meds: []; neg: True"
+17592668.0,0,0.0,low,keywords: []; meds: []; neg: True
+16047294.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+19854524.0,1,1.0,high,"keywords: ['dementia', 'vascular dementia']; meds: ['memantine', 'namenda']; neg: False"
+15357498.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+18579789.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'memantine']; neg: False"
+11878449.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+18067484.0,0,0.0,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: True"
+18754977.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['namenda', 'exelon']; neg: False"
+12080230.0,1,0.9,high,"keywords: ['dementia', 'mci']; meds: ['memantine']; neg: False"
+13018952.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+17306476.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+15085228.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+12448661.0,0,0.2,medium,keywords: ['dementia']; meds: []; neg: False
+15776779.0,1,0.9,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'aricept', 'memantine', 'namenda']; neg: True"
+14859055.0,0,0.0,medium,"keywords: ['dementia', 'mci']; meds: []; neg: True"
+19935828.0,0,0.0,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: True"
+11023709.0,1,0.9,high,keywords: ['dementia']; meds: ['donepezil']; neg: False
+19315941.0,1,0.9,high,"keywords: ['dementia']; meds: ['rivastigmine', 'exelon']; neg: False"
+12464528.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+11946301.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+12147503.0,1,0.4,high,"keywords: ['dementia', 'vascular dementia']; meds: []; neg: False"
+13560926.0,0,0.2,medium,keywords: ['dementia']; meds: []; neg: False
+19001774.0,1,0.9,high,"keywords: ['dementia']; meds: ['aricept', 'memantine', 'namenda']; neg: True"
+15155821.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+15290047.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+15279651.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+17992354.0,1,0.9,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil']; neg: True"
+11134683.0,1,0.9,high,"keywords: ['dementia']; meds: ['donepezil', 'aricept']; neg: False"
+16102517.0,0,0.0,low,keywords: []; meds: []; neg: False
+10737880.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'memantine']; neg: False"
+18901656.0,1,0.9,high,keywords: ['mci']; meds: ['donepezil']; neg: False
+11453452.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+19300208.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+19551307.0,1,1.0,high,"keywords: ['dementia', 'vascular dementia']; meds: ['galantamine']; neg: False"
+15704029.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+18011384.0,1,0.9,high,keywords: ['dementia']; meds: ['donepezil']; neg: False
+12939877.0,1,1.0,high,keywords: ['alzheimer']; meds: ['galantamine']; neg: False
+19381528.0,0,0.0,low,keywords: []; meds: []; neg: False
+15187515.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+12685723.0,1,0.9,high,keywords: ['dementia']; meds: ['donepezil']; neg: False
+11931339.0,0,0.0,low,keywords: []; meds: []; neg: False
+14277146.0,1,0.9,high,"keywords: ['dementia']; meds: ['memantine', 'namenda']; neg: True"
+14644494.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+11934020.0,0,0.0,low,keywords: []; meds: []; neg: False
+19690958.0,0,0.0,low,keywords: []; meds: []; neg: False
+14221417.0,0,0.0,low,keywords: []; meds: []; neg: False
+14048658.0,0,0.0,low,keywords: []; meds: []; neg: False
+14616925.0,0,0.0,low,keywords: []; meds: []; neg: False
+15698381.0,0,0.0,low,keywords: []; meds: []; neg: False
+15485158.0,0,0.0,low,keywords: []; meds: []; neg: False
+14034291.0,1,0.3,medium,keywords: ['cognitive impairment']; meds: []; neg: False
+17372675.0,0,0.0,low,keywords: []; meds: []; neg: False
+17643155.0,1,0.3,medium,keywords: ['mci']; meds: []; neg: False
+17929817.0,0,0.0,low,keywords: []; meds: []; neg: False
+14605196.0,0,0.0,low,keywords: []; meds: []; neg: False
+19111622.0,0,0.0,low,keywords: []; meds: []; neg: False
+16759769.0,0,0.0,low,keywords: []; meds: []; neg: False
+14178580.0,0,0.0,low,keywords: []; meds: []; neg: False
+13200957.0,0,0.0,medium,keywords: ['memory loss']; meds: []; neg: True
+11576327.0,0,0.0,low,keywords: []; meds: []; neg: False
+18166657.0,0,0.0,low,keywords: []; meds: []; neg: False
+12232340.0,0,0.0,low,keywords: []; meds: []; neg: False
+14335525.0,0,0.0,low,keywords: []; meds: []; neg: False
+13315911.0,1,0.3,medium,keywords: ['mci']; meds: []; neg: False
+19798988.0,0,0.0,low,keywords: []; meds: []; neg: False
+14030143.0,0,0.0,low,keywords: []; meds: []; neg: False
+16114277.0,1,0.3,medium,keywords: ['mci']; meds: []; neg: False
+17625485.0,0,0.0,low,keywords: []; meds: []; neg: False
+14677796.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+17934220.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+11466215.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+15903977.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+12437079.0,0,0.0,low,keywords: []; meds: []; neg: False
+13804696.0,1,0.3,medium,"keywords: ['dementia', 'mci']; meds: []; neg: False"
+13925546.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+17723627.0,0,0.0,medium,keywords: ['cognitive impairment']; meds: []; neg: True
+12667072.0,0,0.0,low,keywords: []; meds: []; neg: False
+13423849.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+17971963.0,0,0.0,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: True"
+13862391.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+15110729.0,0,0.0,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: True"
+14386548.0,1,0.9,high,keywords: ['dementia']; meds: ['donepezil']; neg: False
+13942120.0,0,0.0,medium,"keywords: ['dementia', 'mci']; meds: []; neg: True"
+12518657.0,1,0.4,high,"keywords: ['alzheimer', 'dementia', 'mci']; meds: []; neg: False"
+16348790.0,1,0.9,high,"keywords: ['alzheimer', 'dementia']; meds: ['aricept']; neg: True"
+19290730.0,1,0.9,high,"keywords: ['dementia', 'memory loss']; meds: ['donepezil']; neg: False"
+19054102.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+15229355.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+12692061.0,1,0.9,high,keywords: ['dementia']; meds: ['donepezil']; neg: False
+17569775.0,0,0.0,low,keywords: []; meds: []; neg: False
+18861579.0,0,0.0,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: True"
+15876139.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+18318985.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+16359284.0,1,0.3,medium,keywords: ['cognitive impairment']; meds: []; neg: False
+16574411.0,0,0.0,high,"keywords: ['dementia', 'mci', 'frontotemporal']; meds: []; neg: True"
+15410596.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+14761733.0,0,0.0,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: True"
+15945459.0,0,0.2,medium,"keywords: ['dementia', 'memory loss']; meds: []; neg: False"
+14163625.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'memantine']; neg: False"
+13096804.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+16010440.0,1,0.9,high,"keywords: ['dementia', 'cognitive impairment']; meds: ['donepezil', 'memantine']; neg: False"
+17367831.0,1,0.9,high,"keywords: ['dementia', 'vascular dementia']; meds: ['donepezil', 'memantine']; neg: True"
+18731528.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+12369221.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+13971808.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+11364274.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+15384065.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+19654967.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+13198822.0,1,0.9,high,"keywords: ['alzheimer', 'dementia']; meds: ['aricept']; neg: True"
+15995750.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+13827006.0,1,0.4,high,keywords: ['alzheimer']; meds: []; neg: False
+13844538.0,1,0.9,high,keywords: ['dementia']; meds: ['donepezil']; neg: False
+17999505.0,1,0.9,high,"keywords: ['alzheimer', 'dementia']; meds: ['aricept', 'memantine', 'namenda']; neg: True"
+15809809.0,1,0.3,medium,"keywords: ['dementia', 'memory impairment']; meds: []; neg: False"
+18305195.0,1,0.9,high,keywords: ['dementia']; meds: ['donepezil']; neg: False
+16831796.0,0,0.0,low,keywords: []; meds: []; neg: True
+11210521.0,1,0.4,high,"keywords: ['dementia', 'vascular dementia']; meds: []; neg: False"
+18488564.0,0,0.2,medium,keywords: ['dementia']; meds: []; neg: False
+17535892.0,0,0.0,low,keywords: []; meds: []; neg: False
+17321216.0,0,0.0,low,keywords: []; meds: []; neg: False
+13522316.0,0,0.0,low,keywords: []; meds: []; neg: False
+10538374.0,0,0.0,low,keywords: []; meds: []; neg: False
+11398974.0,0,0.0,low,keywords: []; meds: []; neg: False
+17800148.0,0,0.0,low,keywords: []; meds: []; neg: False
+19896166.0,0,0.0,low,keywords: []; meds: []; neg: False
+18390704.0,0,0.0,low,keywords: []; meds: []; neg: False
+17012697.0,0,0.0,low,keywords: []; meds: []; neg: False
+18171416.0,1,0.3,medium,keywords: ['mci']; meds: []; neg: False
+10281394.0,0,0.0,low,keywords: []; meds: []; neg: False
+13561149.0,1,0.3,medium,keywords: ['mci']; meds: []; neg: False
+18448081.0,0,0.0,low,keywords: []; meds: []; neg: False
+16863739.0,0,0.0,low,keywords: []; meds: []; neg: False
+12325495.0,0,0.0,low,keywords: []; meds: []; neg: True
+10579128.0,0,0.0,low,keywords: []; meds: []; neg: False
+13115057.0,0,0.0,low,keywords: []; meds: []; neg: False
+19102930.0,0,0.0,low,keywords: []; meds: []; neg: False
+19701692.0,0,0.0,low,keywords: []; meds: []; neg: False
+11131388.0,0,0.0,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: True"
+12434095.0,0,0.0,low,keywords: []; meds: []; neg: False
+19026020.0,0,0.0,low,keywords: []; meds: []; neg: False
+14770755.0,0,0.0,low,keywords: []; meds: []; neg: False
+12783356.0,0,0.0,low,keywords: []; meds: []; neg: False
+10107636.0,0,0.0,low,keywords: []; meds: []; neg: False
+12433158.0,1,1.0,high,"keywords: ['alzheimer', 'dementia', 'cognitive impairment']; meds: ['memantine']; neg: False"
+18540421.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+10404360.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+13877014.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+17968329.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+16456857.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+19731136.0,1,0.9,high,"keywords: ['dementia', 'vascular dementia']; meds: ['donepezil']; neg: True"
+15699151.0,1,1.0,high,"keywords: ['alzheimer', 'dementia', 'cognitive impairment']; meds: ['donepezil', 'aricept', 'memantine', 'namenda']; neg: False"
+17396168.0,1,0.9,high,"keywords: ['alzheimer', 'dementia']; meds: ['aricept', 'exelon']; neg: True"
+12089245.0,1,0.9,high,"keywords: ['dementia']; meds: ['donepezil', 'aricept']; neg: False"
+16983240.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+15493803.0,1,0.9,high,"keywords: ['dementia', 'vascular dementia']; meds: ['aricept']; neg: True"
+18066032.0,1,0.4,high,"keywords: ['alzheimer', 'dementia']; meds: []; neg: False"
+18296202.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+10966093.0,1,0.3,medium,"keywords: ['dementia', 'mci']; meds: []; neg: False"
+12171765.0,1,0.9,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'memantine']; neg: True"
+15801929.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+14477122.0,1,1.0,high,"keywords: ['alzheimer']; meds: ['donepezil', 'namenda']; neg: False"
+19917861.0,1,0.3,medium,"keywords: ['dementia', 'neurodegenerative']; meds: []; neg: False"
+15314851.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+17941778.0,1,0.9,high,"keywords: ['dementia', 'memory loss']; meds: ['memantine']; neg: False"
+12973666.0,1,0.9,high,"keywords: ['dementia']; meds: ['donepezil', 'aricept']; neg: True"
+18433592.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+18972794.0,0,0.2,medium,keywords: ['dementia']; meds: []; neg: False
+14164080.0,0,0.0,low,keywords: []; meds: []; neg: False
+12390114.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+15337159.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'aricept', 'memantine', 'namenda']; neg: False"
+15819821.0,1,0.3,medium,"keywords: ['dementia', 'mci']; meds: []; neg: False"
+18795498.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'aricept', 'memantine', 'namenda']; neg: False"
+12112670.0,0,0.0,medium,"keywords: ['dementia', 'cognitive impairment']; meds: []; neg: True"
+12362110.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+15306746.0,1,0.3,medium,keywords: ['dementia']; meds: []; neg: False
+16059144.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+19570820.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'aricept']; neg: False"
+15325143.0,0,0.0,low,keywords: []; meds: []; neg: True
+18145358.0,1,0.4,high,"keywords: ['alzheimer', 'dementia', 'vascular dementia']; meds: []; neg: False"
+16540501.0,1,0.9,high,"keywords: ['alzheimer', 'dementia', 'frontotemporal']; meds: ['donepezil', 'aricept']; neg: True"
+12967115.0,0,0.0,low,keywords: []; meds: []; neg: False
+17288578.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+16709712.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+15951428.0,1,0.9,high,"keywords: ['dementia']; meds: ['donepezil', 'aricept', 'memantine', 'namenda']; neg: False"
+11657958.0,0,0.0,low,keywords: []; meds: []; neg: False
+15173908.0,1,1.0,high,"keywords: ['alzheimer', 'dementia']; meds: ['donepezil', 'memantine']; neg: False"
+19013486.0,0,0.1,medium,keywords: ['dementia']; meds: []; neg: True
+15927407.0,0,0.0,medium,"keywords: ['dementia', 'memory impairment']; meds: []; neg: True"
+16091399.0,0,0.0,low,keywords: []; meds: []; neg: False
+15878406.0,0,0.0,low,keywords: []; meds: []; neg: False
+19697088.0,0,0.0,low,keywords: []; meds: []; neg: False
+11591823.0,0,0.0,low,keywords: []; meds: []; neg: False
+18371833.0,0,0.0,low,keywords: []; meds: []; neg: False
+14437578.0,0,0.0,low,keywords: []; meds: []; neg: False
+12695987.0,0,0.0,low,keywords: []; meds: []; neg: False
+19040142.0,0,0.0,low,keywords: []; meds: []; neg: False
+16132860.0,0,0.0,low,keywords: []; meds: []; neg: False
+10281634.0,0,0.0,low,keywords: []; meds: []; neg: False
+17389241.0,0,0.0,low,keywords: []; meds: []; neg: False
+16025201.0,0,0.0,low,keywords: []; meds: []; neg: True
+14689001.0,0,0.0,low,keywords: []; meds: []; neg: False
+16213697.0,0,0.0,low,keywords: []; meds: []; neg: False
+13143465.0,0,0.0,low,keywords: []; meds: []; neg: False
+18613251.0,0,0.0,low,keywords: []; meds: []; neg: False
+13172677.0,0,0.0,low,keywords: []; meds: []; neg: False
+15792737.0,0,0.0,low,keywords: []; meds: []; neg: True
+17373040.0,0,0.0,low,keywords: []; meds: []; neg: False
+18513773.0,0,0.0,low,keywords: []; meds: []; neg: False
+12596965.0,0,0.0,low,keywords: []; meds: []; neg: False
+18982683.0,0,0.0,low,keywords: []; meds: []; neg: False
+19191110.0,0,0.0,low,keywords: []; meds: []; neg: False
+11199391.0,0,0.0,low,keywords: []; meds: []; neg: False

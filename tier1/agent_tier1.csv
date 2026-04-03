@@ -1,0 +1,220 @@
+patient_id,label,probability,confidence,evidence,icd_score,med_score,note_score,agents_fired
+13312152.0,1,0.735,high,found: Alzheimer's | found: Donepezil | explicit: Alzheimer's,0.75,0.7,0.75,3
+15729286.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+11311156.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+14235477.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12206010.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+16073325.0,1,0.525,medium,found: Vascular Dementia | explicit: Dementia,0.75,0.0,0.75,2
+19464551.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17592668.0,0,0.15,high,cognitive evidence: confused,0.0,0.0,0.5,1
+16047294.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19854524.0,1,0.525,medium,found: Vascular Dementia | explicit: Dementia,0.75,0.0,0.75,2
+15357498.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18579789.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+11878449.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18067484.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18754977.0,1,0.525,medium,found: Alzheimer | explicit: Alzheimer,0.75,0.0,0.75,2
+12080230.0,1,0.525,medium,found: MCI | explicit: MCI,0.75,0.0,0.75,2
+13018952.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+17306476.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15085228.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+12448661.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15776779.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+14859055.0,0,0.15,high,cognitive evidence: disoriented,0.0,0.0,0.5,1
+19935828.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+11023709.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19315941.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12464528.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+11946301.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12147503.0,0,0.15,high,cognitive evidence: Confused,0.0,0.0,0.5,1
+13560926.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19001774.0,1,0.735,high,found: Dementia | found: Namenda | explicit: Dementia,0.75,0.7,0.75,3
+15155821.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15290047.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15279651.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+17992354.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+11134683.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+16102517.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+10737880.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+18901656.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+11453452.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19300208.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19551307.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15704029.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18011384.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12939877.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+19381528.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15187515.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12685723.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+11931339.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14277146.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+14644494.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+11934020.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19690958.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14221417.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14048658.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14616925.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15698381.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15485158.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14034291.0,1,0.525,medium,found: cognitive impairment | explicit: cognitive impairment,0.75,0.0,0.75,2
+17372675.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17643155.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17929817.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14605196.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19111622.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16759769.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14178580.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13200957.0,0,0.15,high,cognitive evidence: forgetful,0.0,0.0,0.5,1
+11576327.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18166657.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12232340.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14335525.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13315911.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19798988.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14030143.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16114277.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17625485.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14677796.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+17934220.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+11466215.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15903977.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12437079.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13804696.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+13925546.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+17723627.0,0,0.15,high,cognitive evidence: confused,0.0,0.0,0.5,1
+12667072.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13423849.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+17971963.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+13862391.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+15110729.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+14386548.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13942120.0,0,0.225,high,explicit: dementia,0.0,0.0,0.75,1
+12518657.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+16348790.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+19290730.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19054102.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+15229355.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12692061.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17569775.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18861579.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15876139.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18318985.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16359284.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16574411.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15410596.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+14761733.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15945459.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+14163625.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+13096804.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+16010440.0,1,0.525,medium,found: cognitive impairment | explicit: cognitive impairment,0.75,0.0,0.75,2
+17367831.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18731528.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12369221.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13971808.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+11364274.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15384065.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19654967.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+13198822.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+15995750.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+13827006.0,1,0.525,medium,found: Alzheimer | explicit: Alzheimer,0.75,0.0,0.75,2
+13844538.0,1,0.735,high,found: dementia | found: donepezil | explicit: dementia,0.75,0.7,0.75,3
+17999505.0,1,0.735,high,found: dementia | found: Namenda | explicit: dementia,0.75,0.7,0.75,3
+15809809.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18305195.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+16831796.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+11210521.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18488564.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+17535892.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17321216.0,0,0.15,high,cognitive evidence: Confused,0.0,0.0,0.5,1
+13522316.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+10538374.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+11398974.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17800148.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19896166.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18390704.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17012697.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18171416.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+10281394.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13561149.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18448081.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16863739.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12325495.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+10579128.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13115057.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19102930.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19701692.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+11131388.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12434095.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19026020.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14770755.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12783356.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+10107636.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12433158.0,1,0.525,medium,found: cognitive impairment | explicit: cognitive impairment,0.75,0.0,0.75,2
+18540421.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+10404360.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+13877014.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+17968329.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+16456857.0,1,0.525,medium,found: Alzheimers | explicit: Alzheimers,0.75,0.0,0.75,2
+19731136.0,1,0.525,medium,found: Vascular dementia | explicit: dementia,0.75,0.0,0.75,2
+15699151.0,1,0.525,medium,found: Cognitive Impairment | explicit: Cognitive Impairment,0.75,0.0,0.75,2
+17396168.0,1,0.735,high,found: Alzheimers | found: Aricept | explicit: Alzheimers,0.75,0.7,0.75,3
+12089245.0,1,0.735,high,found: dementia | found: Aricept | explicit: dementia,0.75,0.7,0.75,3
+16983240.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15493803.0,1,0.735,high,found: dementia | found: aricept | explicit: dementia,0.75,0.7,0.75,3
+18066032.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+18296202.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+10966093.0,1,0.525,medium,found: DEMENTIA | explicit: DEMENTIA,0.75,0.0,0.75,2
+12171765.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+15801929.0,0,0.15,high,cognitive evidence: confused,0.0,0.0,0.5,1
+14477122.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+19917861.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+15314851.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+17941778.0,0,0.15,high,cognitive evidence: memory loss,0.0,0.0,0.5,1
+12973666.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18433592.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+18972794.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+14164080.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12390114.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15337159.0,1,0.525,medium,found: Alzheimer's | explicit: Alzheimer's,0.75,0.0,0.75,2
+15819821.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18795498.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12112670.0,0,0.225,high,explicit: dementia,0.0,0.0,0.75,1
+12362110.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15306746.0,1,0.525,medium,found: Dementia | explicit: Dementia,0.75,0.0,0.75,2
+16059144.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19570820.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15325143.0,0,0.15,high,cognitive evidence: confused,0.0,0.0,0.5,1
+18145358.0,1,0.525,medium,found: vascular dementia | explicit: dementia,0.75,0.0,0.75,2
+16540501.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+12967115.0,0,0.15,high,cognitive evidence: confused,0.0,0.0,0.5,1
+17288578.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+16709712.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15951428.0,1,0.735,high,found: dementia | found: namenda | explicit: dementia,0.75,0.7,0.75,3
+11657958.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15173908.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+19013486.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+15927407.0,1,0.525,medium,found: dementia | explicit: dementia,0.75,0.0,0.75,2
+16091399.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15878406.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19697088.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+11591823.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18371833.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14437578.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12695987.0,0,0.15,high,cognitive evidence: Confused,0.0,0.0,0.5,1
+19040142.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16132860.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+10281634.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17389241.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16025201.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+14689001.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+16213697.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13143465.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18613251.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+13172677.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+15792737.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+17373040.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18513773.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+12596965.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+18982683.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+19191110.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
+11199391.0,0,0.0,high,no signal found,0.0,0.0,0.0,0
