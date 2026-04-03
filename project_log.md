@@ -76,6 +76,61 @@
 
 ---
 
+## Agent 性能优化（2026-04-03）
+
+### 背景：Tier 1 初跑结果很差
+
+首次跑完 `agent_tier1.csv` 后评估（n=169，y_true ∈ {0,1}）：
+
+| 指标 | Tier0 dx_only | Tier1 Agent（初版） |
+|------|--------------|---------------------|
+| Sensitivity | 1.00 | **0.28** ← 漏掉 72% 真阳性 |
+| Specificity | 0.26 | 0.85 |
+| F1 | 0.70 | 0.39 |
+
+### 根因分析（Codex Bridge 数据驱动诊断）
+
+**A1（最严重）：ICD agent 完全失效**
+- `icd_agent` 在 note 文本里找显式 `G30/F00` 代码，但这类代码存在于 claims/discharge 数据而非 note text
+- 实测：78 个真阳性中，ICD 代码覆盖率 **0%**（`icd pos 0 of 78`）
+- 问题：ICD agent 占权重 50% 却始终输出 score=0，导致 weighted_score 被系统性压低
+
+**A2：双重门槛叠加导致单信号被拒**
+- COT prompt 要求"2+ signals"，synthesis 又要求 `agents_fired >= 2`
+- annotation_guide 规定 label=1 只需**任一**条件成立（Med OR Note OR ICD）
+- ICD agent 永远不 fire → 只剩 Med + Note 两路，单靠 Note 有信号的病例全被卡死
+
+**A3：文字截断切掉了关键 Med 信号**
+- 56 个 FN 中，22 个含 AD 药物，但其中 **20 个在 2000 字之后**
+- `med_agent` 只看前 2000 字 → 这 20 例药物信号全部截掉
+
+**A4：negation 全局词匹配误伤真阳性**
+- "ruled out" 触发降分，但实际是针对 MI、B12 缺乏等其他疾病的否定
+- 5 例真阳性被误判为 negated dementia
+
+**A5：Note agent 权重仅 20%，却覆盖 96% 真阳性**
+- note 覆盖率：`note pos 75 of 78 rate 0.962`，是最强信号来源
+- 但权重只有 0.2，ICD 占 0.5 却从不 fire，严重失衡
+
+### 5 项修改（2026-04-03，commit cd29e0e）
+
+| # | 改动 | Before | After |
+|---|------|--------|-------|
+| 1 | COT Step 5 | `positive ONLY if 2+ signals` | `positive if ANY 1 signal` |
+| 2 | ICD agent 职责 | 找 G30/F00 显式代码（0% 覆盖） | 找诊断语义关键词（dementia/Alzheimer's/MCI） |
+| 3 | 文字截断 | diag 2k / med 2k / note 3k | diag 4k / med 4k / note 5k |
+| 4 | Negation 范围 | 全局词匹配 | 限定"dementia 被否定"，忽略其他疾病否定 |
+| 5 | Synthesis 权重 & 门槛 | ICD 0.5 / Note 0.2，`agents_fired>=2`，score>=0.45 | Diag 0.4 / Note 0.3，`agents_fired>=1`，score>=0.35 |
+
+### 预期效果
+
+- Sensitivity 从 0.28 明显上升（主要来自改动 1、2、5）
+- Specificity 从 0.85 有所下降（门槛放宽的代价）
+- 目标：F1 超过 Tier0 baseline 的 0.70
+- 需要 M4 重跑 `run_agent_batch()` 验证
+
+---
+
 ## 推理环境（2026-04-02）
 
 **E1：M1 本地跑不动 Ollama 7b（已决策）**
