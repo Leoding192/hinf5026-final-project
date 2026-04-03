@@ -571,6 +571,10 @@ def compare_all_models(
     gt = gt.dropna(subset=["patient_id"])
     gt = gt[gt["y_true"].isin([0, 1])]  # exclude uncertain (-1)
     gt = gt.drop_duplicates(subset=["patient_id"])
+    # Evaluate on held-out test set only (per course requirement: "held-out 80 for evaluation")
+    if "split" in gt.columns:
+        gt = gt[gt["split"] == "test"]
+        print(f"[INFO] Using held-out test set only (split='test')")
     pos = int(gt["y_true"].sum())
     neg = int((gt["y_true"] == 0).sum())
     print(f"Ground truth: {len(gt)} patients (pos={pos}, neg={neg})")

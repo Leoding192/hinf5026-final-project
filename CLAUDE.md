@@ -18,11 +18,22 @@
 ## 关键路径 & 数据
 | 文件 | 说明 |
 |------|------|
-| `data/patient_notes/patient_notes.csv` | 300 行原始文本，`_load_notes()` 去重后 219 条 |
-| `outputs/ground_truth.csv` | y_true: 1=83 / 0=92 / -1=50（评估时过滤 -1 和 NaN）|
-| `outputs/dx_only_baseline.csv` | ICD 规则 baseline：灵敏度 100%，特异度 42.7% |
-| `tier1/agent_tier1.csv` | Tier 1 Agent 结果（M4 跑，待收）|
-| `outputs/llm_qwen_api_cot.csv` | Tier 2 Cloud 结果（M2 跑，待收）|
+| `data/patient_notes/patient_notes.csv` | 300 行原始文本，去重后 219 条 |
+| `outputs/ground_truth.csv` | y_true: 1=78 / 0=91 / -1=50；split: train=102 / test=68 / uncertain=49 |
+| `tier0/dx_only_baseline.csv` | ICD 规则 baseline |
+| `tier1/agent_tier1.csv` | Tier 1 Edge Agent 结果（keyword 模拟，非真实 LLM） |
+| `tier2/llm_qwen_cot.csv` | Tier 2 Cloud Direct 结果（qwen-plus API） |
+| `tier3/llm_claude_cot.csv` | Tier 3 Frontier 结果（Claude Code） |
+
+## 评估规则（重要）
+- **评估集**：held-out test set only（`split='test'`，n≈67）— 课程要求 "held-out 80 for evaluation"
+- `compare_all_models()` 已内置 split 过滤，直接调用即可
+- 过滤条件：`y_true ∈ {0,1}`（排除 -1 uncertain）AND `split == 'test'`
+- **不能**用 train set 指标替代 test set 指标
+
+## Inter-rater Reliability 说明
+- 3 个 reviewer 各标注 75 个不同患者（无系统性重叠），Cohen's Kappa 不适用
+- Report 里说明：reviewers each covered non-overlapping subsets; formal kappa not computed
 
 ## 推理架构
 | Tier | 机器 | 模型 | 隐私 |
@@ -41,16 +52,10 @@
 
 ## 待办事项
 
-### 进行中（等待结果）
-- [ ] 等待 M4 结果：`tier1/agent_tier1.csv`
-- [ ] 等待 M2 结果：`outputs/llm_qwen_api_cot.csv`
-- [ ] 收到结果后跑 `compare_all_models()`，输出 `model_comparison.png`
-
-### Milestone 4：对比 & 可视化
-- [ ] 评估 Tier 1 / Tier 2 性能（AUC / Sensitivity / Specificity / F1）
-- [ ] compare_all_models()：Tier 0–2 对比图
-
-### 最终交付（截止 Apr 16）
-- [ ] Technical report（3–8 页 PDF）
-- [ ] Presentation slides（15-20 分钟，Apr 9 演示）
-- [ ] 所有代码/数据/输出打包 zip 提交
+### 当前状态（2026-04-03）
+- [x] Ground truth 219 条，train/test split 完成
+- [x] 四层推理结果全部就绪（tier0–3）
+- [x] model_comparison.png（test set, n=67）
+- [ ] Technical report（3–8 页 PDF）← 下一步
+- [ ] Presentation slides（ppt.md 大纲已建）← Apr 9 演示
+- [ ] 最终 zip 打包提交 ← Apr 16
