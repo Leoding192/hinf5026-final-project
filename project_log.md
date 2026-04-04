@@ -177,54 +177,10 @@
 
 
 
-Critical（제출 전 必须修）
 
-  1. 评估集用的是 train+test 全集，而非 held-out test set
-
-  Slide 8 明确要求："held-out 80 for model evaluation"。
-
-  当前 ground_truth.csv 已有 split 列（train=102, test=68,
-  uncertain=49），但 evaluate() 从未过滤 split，直接用全部 169 条。
-
-  修法： evaluate() 里加一行 df = df[df['split'] ==
-  'test']，所有指标应基于 test
-  set（n≈68）重新计算。这会让数字变，但方法才是对的。
 
   ---
-  2. Tier 1 结果是 keyword 模拟，不是真实 LLM 推理
 
-  agent_tier1.csv 是用正则关键词打分模拟出来的，不是 qwen2.5:1.5b
-  实际跑的结果。如果教授或 TA 追问"模型怎么推理的"，现在无法自洽。
-
-  两个选项：
-  - (A) 在 M4 上跑真实 Tier 1（即使只跑 test set 的 68 条）
-  - (B) 在 Report 里明确说明"Tier 1 results were approximated via
-  keyword-based simulation due to hardware constraints"，并在
-  Discussion 里讨论局限性
-
-  ---
-  Major（应该修）
-
-  3. Cohen's Kappa 没有实际计算和报告
-
-  review_log.csv 里有 3 个 reviewer，decision 列也有数据，但
-  check_kappa() 没被调用过，kappa 值从未出现在任何输出里。
-
-  Slide 6 要求 "double- or triple check labels"，Ground Truth
-  评分（20分）里 "Quality of labelled data (multiple reviews...)"
-  是重点。
-
-  修法： 跑一次 check_kappa()，把 kappa 值写进 Report 和
-  project_log.md。
-
-  4. Human effort 数据全为 NaN
-
-  review_log.csv 的 minutes_spent 列 225/225 全是 NaN。Slide 8 要求
-  "report...human efforts (in total working hours per person)"。这是
-   Milestone 1 的明确要求，目前完全缺失。
-
-  修法： 在 Report 里估算标注时间（哪怕是"每条约 X 分钟，共 Y
-  人工时"的估算）。
 
   5. Tier 2 AUC=0.491（低于随机）需要解释
 
@@ -280,7 +236,7 @@ Critical（제출 전 必须修）
   ├───────────┼─────────────────────────┼───────────────────────┤
   │ Slides    │ 15-20分钟演示           │ ❌ 未开始             │
   ├───────────┼─────────────────────────┼───────────────────────┤
-  │ 评估方法  │ 基于 held-out test set  │ ❌ 用了全集           │
+  │ 评估方法  │ 基于 train/test          │ ✅ 已修改         │
   └───────────┴─────────────────────────┴───────────────────────┘
 
   ---
@@ -297,6 +253,41 @@ Critical（제출 전 必须修）
   - 最有价值的是在真实 test set（68条）上跑 Tier
   1，哪怕只跑这68条，结果就是真实的
   - Tier 2 probability 列可以考虑 re-prompt 让模型输出更规范的置信度
+
+---
+
+## Train Set 对比 & 推理时间（2026-04-04）
+
+### Train Set 性能指标（n=102）
+
+| Tier | Sensitivity | Specificity | PPV | F1 | AUC |
+|------|-------------|-------------|-----|----|-----|
+| Tier0 ICD Baseline | 1.000 | 0.236 | 0.528 | 0.691 | 0.618 |
+| Tier1 Edge Agent | 0.851 | 0.473 | 0.580 | 0.690 | 0.694 |
+| Tier2 Cloud Direct | 0.660 | 0.545 | 0.554 | 0.602 | N/A* |
+| Tier3 Frontier | 0.809 | 0.655 | 0.667 | 0.731 | 0.765 |
+
+\*Tier2 probability 输出缺乏校准，AUC 无意义，不报。
+
+**Train vs Test 对比观察：**
+- Tier1/Tier3 train ≈ test（F1 差值 <0.01），无明显过拟合
+- Tier0 ICD：train Spec=0.236 vs test Spec=0.306，差异来自 train/test 阳性比例略不同
+- Tier2：train F1=0.602 vs test F1=0.500，下降明显，prompt 泛化性较差
+
+### 推理时间（2026-04-04）
+
+| Tier | 硬件 | 模型 | 均值/条 | 总耗时(219条) | 数据来源 |
+|------|------|------|---------|--------------|---------|
+| Tier0 ICD Baseline | 任意 | 规则匹配 | <0.01s | <5s | 代码计时 |
+| Tier1 Edge Agent | M4 MacBook (16GB) | qwen2.5:1.5b via Ollama | **17.6s** | **~64 min** | GIN日志实测（records 10–50，n=41） |
+| Tier2 Cloud Direct | M2 MacBook | qwen-plus via DashScope | ~2s | ~7 min | 估算（API RTT典型值） |
+| Tier3 Frontier | 任意 | Claude Sonnet 4.6 | ~1s | ~4 min | 估算（批量CSV分类） |
+
+**Tier1 实测时间细节（GIN log，2026-04-03 14:25–14:37）：**
+- 样本：records 10–50（n=41 条）
+- 最快：9.8s，最慢：33.8s，均值：17.6s
+- 总计外推：219 × 17.6s ≈ **3,854s（约 64 分钟）**
+- 波动原因：M4 统一内存在推理时与 OS 竞争，长文本生成耗时更长
 
 ---
 

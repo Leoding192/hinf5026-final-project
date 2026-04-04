@@ -59,6 +59,8 @@
 - [x] model_comparison.png（test set, n=67）
 - [x] Human effort 估算填充（review_log.csv minutes_spent，~55.6 hrs）
 - [x] Cohen's Kappa 不可计算 → 记录为 Limitation（project_log.md Q1）
+- [x] Train set 性能指标计算完成（project_log.md）
+- [x] 推理时间实测/估算完成（Tier1: 17.6s/条实测，总计~64min）
 - [ ] Technical report（3–8 页 PDF）← 下一步
 - [ ] Presentation slides（ppt.md 大纲已建）← Apr 9 演示
 - [ ] 最终 zip 打包提交 ← Apr 16
