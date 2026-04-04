@@ -192,19 +192,7 @@
   Tier2 的 AUC，注明 "probability not calibrated"。
 
   ---
-  Minor（有时间再做）
 
-  6. 评估没有 train set 对比
-
-  Slide 8 要求 "report performance...in training and validation set
-  by different methods"。目前只有一个评估集，没有 train set
-  上的指标（即使只是为了看 overfitting）。
-
-  7. 没有 inference time 实测数据
-
-  research_topic_plan.md 把 "推理时间（秒/条）" 列为核心 AI Infra
-  指标，但没有任何地方记录了实际耗时。Tier 2 的 API 调用时间、Tier 3
-   的 Claude Code 时间都没有。Report 里需要这张表。
 
   ---
   当前完成度 vs 作业要求
