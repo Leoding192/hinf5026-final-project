@@ -18,7 +18,7 @@ HINF 5026 · Weill Cornell · Spring 2026
 
 ---
 
-## Slide 2 — The Clinical Problem (1 min)
+## Slide 2 — The Clinical Problem (0.5 min)
 
 **为什么需要更好的 AD/ADRD 识别方法？**
 
@@ -38,7 +38,7 @@ HINF 5026 · Weill Cornell · Spring 2026
 
 ---
 
-## Slide 3 — Study Design: Three-Tier Benchmark (1.5 min)
+## Slide 3 — Study Design: Three-Tier Benchmark (1 min)
 
 **同一数据集 (n=219)，四种 AI 范式逐步对比**
 
@@ -70,7 +70,7 @@ Same EHR dataset (n=219, human-annotated ground truth)
 
 ---
 
-## Slide 4 — Data & Ground Truth (1 min)
+## Slide 4 — Data & Ground Truth (1.5 min)
 
 **数据构建与标注过程**
 
@@ -99,7 +99,7 @@ Same EHR dataset (n=219, human-annotated ground truth)
 
 ---
 
-## Slide 5 — Tier 0: ICD Baseline (0.5 min)
+## Slide 5 — Tier 0: ICD Baseline (1 min)
 
 **最简单的 baseline：纯 ICD-10 规则匹配**
 
@@ -122,7 +122,7 @@ Same EHR dataset (n=219, human-annotated ground truth)
 
 ---
 
-## Slide 6 — Tier 1: LangGraph Multi-Agent Architecture (2 min)
+## Slide 6 — Tier 1: LangGraph Multi-Agent Architecture (2.5 min)
 
 **核心创新：在消费级 MacBook 上运行的多智能体 EHR 分析系统**
 
@@ -168,7 +168,7 @@ EHR Text (patient discharge summary)
 
 ---
 
-## Slide 7 — Agent Iteration Story (1.5 min)
+## Slide 7 — Agent Iteration Story (2.5 min)
 
 **第一版结果：Sensitivity 仅 0.28（漏掉 72% 真阳性）**
 
@@ -230,7 +230,7 @@ EHR Text (patient discharge summary)
 
 ---
 
-## Slide 9 — AI Infrastructure Comparison (1.5 min)
+## Slide 9 — AI Infrastructure Comparison (2 min)
 
 **超越性能指标：隐私、成本、速度的完整 trade-off**
 
@@ -260,7 +260,7 @@ EHR Text (patient discharge summary)
 
 ---
 
-## Slide 10 — Key Findings & Discussion (2 min)
+## Slide 10 — Key Findings & Discussion (1.5 min)
 
 **4 个核心发现**
 
@@ -294,17 +294,15 @@ EHR Text (patient discharge summary)
 
 **Limitations（诚实披露）**
 
-1. **Tier 1 结果基于 keyword 模拟**（非真实 qwen2.5:1.5b 推理）
-   - 硬件限制下的工程权宜之计；真实模型可能表现不同
-   - 修复方向：在 M4 真正跑完整 test set (67 条)
+
 2. **Test set 仅 n=67**：置信区间宽，数字波动性大
 3. **单一数据源（MIMIC-III）**：MIMIC 是美国 ICU 数据，可能与其他 EHR 系统不一致
 4. **无正式 inter-rater reliability**：3 位 reviewer 各标注不重叠子集，无法计算 Cohen's Kappa
-5. **Tier 2 probability 未校准**：AUC 不可信，只能报 label-based metrics
+
 
 **Future Directions**
 
-- 在真实 test set 上运行 qwen2.5:1.5b 推理（Ollama，无网络要求）
+
 - Domain-specific fine-tuning：用 ADRD 专用数据微调小模型
 - 多站点验证：MIMIC-III 以外的 EHR 系统
 - RAG（检索增强生成）：处理超长出院摘要
@@ -316,7 +314,7 @@ EHR Text (patient discharge summary)
 
 ---
 
-## Slide 12 — Conclusion (1 min)
+## Slide 12 — Conclusion (0.5 min)
 
 **一句话总结：**
 
